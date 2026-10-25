@@ -2,7 +2,7 @@
 
 تطبيق أندرويد لتسميع حفظيات السادس العلمي بالصوت. الطالب يختار سؤال (تعريف، تعليل...) ويحجي الجواب، والتطبيق يتابعه كلمة كلمة. إذا سكت أو غلط، يطلعله **تلميح صوري** (بطاقة ميم) للمقطع اللي وكف عنده، وإذا بقى واكف تطلع أول كلمتين. بالآخر يعطيه نتيجة ويأشرله الكلمات اللي نساها.
 
-النسخة الحالية: فيزياء، أول أربع فصول (المتسعات، الحث الكهرومغناطيسي، التيار المتناوب، الموجات الكهرومغناطيسية)، 211 سؤال من ملزمة كلاميات حسين محمد.
+النسخة الحالية: فيزياء، أول خمس فصول (المتسعات، الحث الكهرومغناطيسي، التيار المتناوب، الموجات الكهرومغناطيسية، البصريات الفيزيائية)، 281 سؤال من ملزمة كلاميات حسين محمد.
 
 ## تنزيل التطبيق
 
@@ -31,6 +31,6 @@ cd android && ./gradlew assembleDebug
 
 In a browser, `Samaali.say('...')` in the console feeds text as if it were heard.
 
-Adding a chapter: add `www/data/<chapter>.json` in the same shape, list it in `www/data/index.json`, then render its hint cards with `tools/memes-render.js` (chapters 2 to 4 are generated from `tools/ch<N>_source.py`, which holds each chunk's text, emoji, scene and caption).
+Adding a chapter: add `www/data/<chapter>.json` in the same shape, list it in `www/data/index.json`, then render its hint cards with `tools/memes-render.js` (chapters 2 to 5 are generated from `tools/ch<N>_source.py`, which holds each chunk's text, emoji, scene and caption).
 
 The debug APK is signed with `android/app/debug.keystore`, a test key kept in the repo so every CI build installs as an update. A Play Store release needs its own private key.

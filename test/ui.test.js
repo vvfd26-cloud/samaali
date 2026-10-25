@@ -71,6 +71,20 @@ const server = http.createServer((req, res) => {
   await page.evaluate(() => Samaali.say('بواسطة الموجات الراديويه'));
   await page.waitForSelector('#result:not([hidden])');
   console.log('chapter 4 score:', await page.textContent('#s-score'));
+
+  await page.click('#to-home');
+  await page.click('#chapters button:nth-child(5)');
+  await page.waitForFunction(() => (document.querySelector('.q-row .q-text') || {}).textContent === 'ما المقصود بتداخل الضوء؟');
+  console.log('chapter 5 questions:', await page.$$eval('.q-row', r => r.length));
+  await page.screenshot({ path: process.argv[2] + '/home-ch5.png' });
+  await page.click('text=ما سبب زرقة السماء نهاراً؟');
+  await page.click('#stuck');
+  await page.waitForFunction(() => { const i = document.getElementById('hint-img'); return i.complete && i.naturalWidth > 0; });
+  console.log('chapter 5 hint image:', await page.$eval('#hint-img', i => i.getAttribute('src')));
+  await page.evaluate(() => Samaali.say('وذلك بسبب زيادة استطارة اللون الازرق'));
+  await page.evaluate(() => Samaali.say('وان شدة الاستطارة تتناسب عكسيا مع الاس الرابع للطول الموجي'));
+  await page.waitForSelector('#result:not([hidden])');
+  console.log('chapter 5 score:', await page.textContent('#s-score'));
   console.log('errors:', errors);
   await browser.close();
   server.close();
