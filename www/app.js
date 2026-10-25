@@ -1,7 +1,21 @@
+// سمعلي: one empty screen. The student recites from memory, the app works out
+// which item they are on and follows along, and when they go quiet it pops a
+// funny meme hint. Nothing else is shown.
 (function () {
   const $ = id => document.getElementById(id);
-  const HINT_STAGE2_MS = 7000;
-  const WRONG_WORDS_FOR_HINT = 3;
+  const timing = { stall: 4000, stage: 6000 }; // silence before the first hint, then before each stronger one
+  const LOCATE_AFTER = 3; // heard words that don't fit the current item before looking at the others
+  const CHEER_MS = 1400;
+
+  const LINES = {
+    question: ['ها؟ ساكت ليش؟ سمّعني هذا 👇', 'يلا بطل، هذا عليك 😎', 'نسيت شنو عليك؟ هاك 😂', 'الأستاذ يسألك 👀'],
+    stall: ['ها؟ وكفت؟ 😅', 'الجواب على طرف لسانك 👅', 'ركّز يا بطل، شوف الصورة 🧠', 'لا تخلي الأستاذ يزعل 😂',
+      'يمعود تذكر، هاي الصورة تذكرك 👀', 'وين رحت؟ ارجع ويانا 🛸', 'دماغك علّق؟ هاك تلميح 🔌'],
+    words: ['هاك أول كلمتين، لا تكول ما ساعدتك 🙈', 'خوش، أساعدك شوية بعد 🤏', 'ها هاي بداية الجملة 👇'],
+    full: ['خلاص هاك المقطع كله، اقره وعيده 📖', 'ماكو مشكلة، اقره وكمّل 💪'],
+    cheer: ['عاش! 🔥', 'وحش 💪', 'صح لسانك 👏', 'ولك انت عبقري 🤯', 'الأستاذ فخور بيك 🥹', 'نار 🔥🔥', 'حفظ ميه بالميه 💯'],
+  };
+  const pick = list => list[Math.floor(Math.random() * list.length)];
 
   const store = {
     get(key, fallback) {
@@ -11,295 +25,237 @@
     set(key, value) { try { localStorage.setItem('samaali:' + key, JSON.stringify(value)); } catch (_) {} },
   };
 
-  const settings = Object.assign({ lang: 'ar-IQ', stall: 5000, showHeard: true }, store.get('settings', {}));
-  let index = null;
-  let chapter = null;
-  let chapterId = store.get('chapter', null);
-  let filter = 'الكل';
-  let session = null;
+  let items = [];   // every item of every chapter, in booklet order
+  let entries = []; // the matcher's view of each item
+  let st = null;    // where the student is in the current item
+  let listening = false;
+  let cheering = false;
+  let speech = null;
 
-  // ---------- screens ----------
-  function show(id) {
-    ['home', 'recite', 'result'].forEach(s => { $(s).hidden = s !== id; });
-    window.scrollTo(0, 0);
-  }
-
-  // ---------- home ----------
-  function bestOf(id) { return store.get('best:' + id, null); }
-
-  function renderHome() {
-    $('chapter-title').textContent = chapter.subject;
-    const chapters = $('chapters');
-    chapters.innerHTML = '';
-    index.chapters.forEach(c => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = c.title;
-      b.setAttribute('aria-pressed', String(c.id === chapterId));
-      b.onclick = () => { if (c.id !== chapterId) loadChapter(c.id); };
-      chapters.appendChild(b);
-    });
-    // Keep the selected chapter visible when the chip row scrolls on narrow screens.
-    const current = chapters.querySelector('[aria-pressed="true"]');
-    if (current && current.scrollIntoView) current.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    const done = chapter.items.filter(i => (bestOf(i.id) || 0) >= 80).length;
-    $('overall-bar').style.width = (done / chapter.items.length * 100) + '%';
-    $('overall-text').textContent = `حافظ ${done} من ${chapter.items.length}`;
-
-    const types = ['الكل', ...new Set(chapter.items.map(i => i.type))];
-    const chips = $('filters');
-    chips.innerHTML = '';
-    types.forEach(t => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = t;
-      b.setAttribute('aria-pressed', String(t === filter));
-      b.onclick = () => { filter = t; renderHome(); };
-      chips.appendChild(b);
-    });
-
-    const list = $('questions');
-    list.innerHTML = '';
-    chapter.items.filter(i => filter === 'الكل' || i.type === filter).forEach(item => {
-      const li = document.createElement('li');
-      const row = document.createElement('button');
-      row.type = 'button';
-      row.className = 'q-row';
-      const best = bestOf(item.id);
-      row.innerHTML = '<span class="q-text"></span><span class="tag"></span><span class="best"></span>';
-      row.querySelector('.q-text').textContent = item.prompt;
-      const tag = row.querySelector('.tag');
-      tag.textContent = item.type;
-      tag.dataset.type = item.type;
-      const b = row.querySelector('.best');
-      b.textContent = best === null ? 'جديد' : best + '%';
-      if (best !== null) b.classList.add(best >= 80 ? 'good' : 'mid');
-      row.onclick = () => startItem(item);
-      li.appendChild(row);
-      list.appendChild(li);
-    });
-  }
-
-  // ---------- recite ----------
-  function startItem(item) {
-    stopListening();
-    const words = Match.buildWords(item);
-    session = {
-      item, words, pointer: 0, segStart: 0, segment: -1, states: words.map(() => 'pending'),
-      hintStage: 0, hintChunk: -1, hintsUsed: 0, lastProgress: Date.now(), startedAt: null, listening: false,
-    };
-    advanceOptional();
-    const idx = chapter.items.indexOf(item);
-    $('r-type').textContent = item.type;
-    $('r-type').dataset.type = item.type;
-    $('r-type').className = 'tag';
-    $('r-counter').textContent = `${idx + 1} / ${chapter.items.length}`;
-    $('r-prompt').textContent = item.prompt;
-    $('r-heard').textContent = '';
-    hideHint();
-    setStatus('دوس على المايك وابدي تسمّع');
-    renderAnswer();
-    show('recite');
-  }
-
-  // Leading symbol tokens (Q, ΔV...) never need to be said.
-  function advanceOptional() {
-    const s = session;
-    while (s.pointer < s.words.length && s.words[s.pointer].optional) {
-      s.states[s.pointer] = 'skipped';
-      s.pointer++;
+  // ---------- following the student ----------
+  // Starts following items[index]. `start` is where the current speech segment
+  // lines up in the item and `pointer` how far it got; segment bookkeeping
+  // carries over so a jump mid-sentence keeps lining up.
+  function begin(index, start = 0, pointer = start) {
+    const carry = st ? { segment: st.segment, tokOffset: st.tokOffset } : { segment: -1, tokOffset: 0 };
+    st = Object.assign({
+      index, words: entries[index].words, segStart: start, pointer: Math.max(start, pointer), states: {},
+      hint: 0, hintChunk: -1, hintAt: 0, hintsUsed: 0, lastProgress: Date.now(),
+    }, carry);
+    if (st.pointer === start) {
+      while (st.pointer < st.words.length && st.words[st.pointer].optional) st.pointer++;
+      st.segStart = st.pointer;
     }
+    store.set('pos', items[index].id);
+    hideHint();
+    items[index].chunks.forEach(c => { new Image().src = c.image; });
   }
-
-  function renderAnswer(target = $('r-answer')) {
-    const s = session;
-    target.innerHTML = '';
-    s.words.forEach((w, i) => {
-      const span = document.createElement('span');
-      span.className = 'w ' + s.states[i] + (i === s.pointer && target.id === 'r-answer' ? ' current' : '');
-      span.textContent = w.raw;
-      target.appendChild(span);
-    });
-  }
-
-  function setStatus(text) { $('r-status').textContent = text; }
 
   function onHeard(text, segment) {
-    const s = session;
-    if (!s || !s.listening) return;
-    if (settings.showHeard) $('r-heard').textContent = text;
-    if (segment !== s.segment) { s.segment = segment; s.segStart = s.pointer; }
-    const r = Match.align(s.words, s.segStart, text);
-    for (let i = s.segStart; i < s.words.length; i++) s.states[i] = 'pending';
-    Object.entries(r.states).forEach(([i, st]) => { s.states[i] = st; });
-    const before = s.pointer;
-    s.pointer = Math.max(s.segStart, r.pointer);
-    if (s.pointer > before) {
-      s.lastProgress = Date.now();
-      if (s.hintStage && currentChunk() !== s.hintChunk) hideHint();
-      else if (s.hintStage === 2) showHintWords();
-    }
-    renderAnswer();
-    if (s.pointer >= s.words.length) { finish(); return; }
-    if (r.unmatchedRun >= WRONG_WORDS_FOR_HINT && s.hintStage === 0) showHint();
+    if (!st || !listening) return;
+    if (segment !== st.segment) { st.segment = segment; st.segStart = st.pointer; st.tokOffset = 0; }
+    const toks = Match.tokenize(text);
+    const fresh = toks.slice(st.tokOffset).join(' ');
+    if (!fresh) return;
+    const r = follow(fresh);
+    if (st.pointer >= st.words.length) { complete(toks.length); return; }
+    if (r.unmatchedRun >= LOCATE_AFTER) relocate(fresh, toks.length);
+  }
+
+  // Lines the segment's words up with the current item from where the segment began.
+  function follow(fresh) {
+    const r = Match.align(st.words, st.segStart, fresh);
+    for (const k in st.states) if (k >= st.segStart) delete st.states[k];
+    Object.assign(st.states, r.states);
+    const pointer = Math.max(st.segStart, r.pointer);
+    const moved = pointer > st.pointer;
+    st.pointer = pointer; // the recognizer may also take words back
+    if (moved) progressed();
+    return r;
+  }
+
+  // The words don't fit where we are: maybe they jumped to another item, said its question, or restarted.
+  function relocate(fresh, tokCount) {
+    const found = Match.locate(entries, fresh, st.index);
+    if (!found || (found.index === st.index && found.start === st.segStart)) return;
+    begin(found.index, found.start, found.pointer);
+    follow(fresh);
+    st.lastProgress = Date.now();
+    if (st.pointer >= st.words.length) complete(tokCount);
+  }
+
+  function progressed() {
+    st.lastProgress = Date.now();
+    if (!st.hint) return;
+    if (currentChunk() !== st.hintChunk) hideHint();
+    else if (st.hint >= 2) setHintWords(st.hint);
+  }
+
+  function complete(tokCount) {
+    const required = st.words.filter(w => !w.optional).length;
+    const matched = st.words.filter((w, k) => !w.optional && st.states[k] === 'matched').length;
+    const id = items[st.index].id;
+    const score = Math.round(matched / required * 100);
+    if (score > store.get('best:' + id, -1)) store.set('best:' + id, score);
+    cheer();
+    st.tokOffset = tokCount; // words already heard in this segment belong to the finished item
+    begin((st.index + 1) % items.length);
   }
 
   function currentChunk() {
-    const s = session;
-    const w = s.words[Math.min(s.pointer, s.words.length - 1)];
+    const w = st.words[Math.min(st.pointer, st.words.length - 1)];
     return w ? w.chunk : 0;
   }
 
-  function showHint() {
-    const s = session;
-    const chunk = s.item.chunks[currentChunk()];
-    if (s.hintStage === 0 || s.hintChunk !== currentChunk()) {
-      s.hintStage = 1;
-      s.hintChunk = currentChunk();
-      s.hintsUsed++;
-      s.hintShownAt = Date.now();
+  // ---------- hints ----------
+  // Stage 1: the meme card (with the question if they haven't started the item).
+  // Stage 2: also the next two words. Stage 3: the rest of the chunk to read.
+  function showHint(stage) {
+    const item = items[st.index];
+    const ci = currentChunk();
+    const chunk = item.chunks[ci];
+    const isNew = !st.hint || ci !== st.hintChunk;
+    const started = Object.keys(st.states).some(k => st.states[k] === 'matched');
+    st.hint = stage;
+    st.hintChunk = ci;
+    st.hintAt = Date.now();
+    st.hintsUsed++;
+    $('hint-line').textContent = pick(stage === 1 ? (started ? LINES.stall : LINES.question) : stage === 2 ? LINES.words : LINES.full);
+    $('hint-q').textContent = item.prompt;
+    $('hint-q').hidden = started;
+    if (isNew) {
       $('hint-img').src = chunk.image;
       $('hint-img').alt = 'تلميح: ' + chunk.caption;
-      $('hint-words').hidden = true;
-      $('hint').hidden = false;
-      setStatus('شوف التلميح وكمّل 👀');
-    } else if (s.hintStage === 1) {
-      s.hintStage = 2;
-      s.hintsUsed++;
-      showHintWords();
+      replay($('hint'));
     }
+    setHintWords(stage);
+    if (stage >= 2) replay($('hint-words'));
+    $('hint').hidden = false;
   }
 
-  // Second-level hint: the next two words to say, as text.
-  function showHintWords() {
-    const s = session;
-    const next = s.words.slice(s.pointer).filter(w => !w.optional && w.chunk === s.hintChunk).slice(0, 2);
-    $('hint-words').textContent = next.length ? next.map(w => w.raw).join(' ') + ' ...' : '';
-    $('hint-words').hidden = !next.length;
+  function setHintWords(stage) {
+    const el = $('hint-words');
+    const rest = st.words.slice(st.pointer).filter(w => w.chunk === st.hintChunk);
+    const shown = stage >= 3 ? rest : rest.filter(w => !w.optional).slice(0, 2);
+    el.textContent = shown.length ? shown.map(w => w.raw).join(' ') + (shown.length < rest.length ? ' ...' : '') : '';
+    el.hidden = stage < 2 || !shown.length;
   }
 
   function hideHint() {
-    if (session) { session.hintStage = 0; session.hintChunk = -1; }
+    if (st) { st.hint = 0; st.hintChunk = -1; }
     $('hint').hidden = true;
-    if (session && session.listening) setStatus('أسمعك... 👂');
+  }
+
+  function replay(el) {
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+
+  function cheer() {
+    const el = $('cheer');
+    el.textContent = pick(LINES.cheer);
+    el.hidden = false;
+    cheering = true;
+    replay(el);
+    clearTimeout(cheer.timer);
+    cheer.timer = setTimeout(() => {
+      el.hidden = true;
+      cheering = false;
+      if (st) st.lastProgress = Date.now();
+    }, CHEER_MS);
   }
 
   setInterval(() => {
-    const s = session;
-    if (!s || !s.listening) return;
-    const idle = Date.now() - s.lastProgress;
-    if (s.hintStage === 0 && idle > settings.stall) showHint();
-    else if (s.hintStage === 1 && Date.now() - s.hintShownAt > HINT_STAGE2_MS && idle > settings.stall) showHint();
+    if (!st || !listening || cheering) return;
+    const now = Date.now();
+    if (now - st.lastProgress < timing.stall) return;
+    if (!st.hint) showHint(1);
+    else if (st.hint < 3 && now - st.hintAt > timing.stage) showHint(st.hint + 1);
   }, 250);
 
-  let speech = null;
-  function startListening() {
-    const s = session;
+  // ---------- listening ----------
+  function setNotice(text) {
+    $('notice').textContent = text;
+    $('notice').hidden = !text;
+  }
+
+  function listen() {
+    if (speech) return;
     speech = new Speech({
-      lang: settings.lang,
+      lang: 'ar-IQ',
       onText: onHeard,
-      onState: (state) => {
-        if (state === 'listening') { s.listening = true; s.lastProgress = Date.now(); s.startedAt = s.startedAt || Date.now(); $('mic').classList.add('on'); setStatus('أسمعك... 👂'); }
-        if (state === 'denied') { s.listening = false; $('mic').classList.remove('on'); setStatus('لازم تسمح للتطبيق يستخدم المايك من الإعدادات'); }
-        if (state === 'unsupported') { s.listening = false; $('mic').classList.remove('on'); setStatus('التعرف على الصوت مو متوفر بهذا الجهاز'); }
-        if (state === 'error') { s.listening = false; $('mic').classList.remove('on'); setStatus('صار خطأ بالمايك، جرب مرة ثانية'); }
+      onState: state => {
+        if (state === 'listening') {
+          listening = true;
+          if (st) st.lastProgress = Date.now();
+          setNotice('');
+          $('dot').classList.add('on');
+          keepAwake();
+          return;
+        }
+        if (state === 'stopped') return;
+        listening = false;
+        speech = null;
+        $('dot').classList.remove('on');
+        hideHint();
+        if (state === 'denied') setNotice('اسمح للتطبيق يستخدم المايك حتى يسمعك 🎙️ وبعدين دوس على الشاشة');
+        if (state === 'unsupported') setNotice('موبايلك ما بيه خدمة التعرف على الصوت 😕 نزّل تطبيق Google وجرب مرة ثانية');
+        if (state === 'error') setNotice('المايك ما اشتغل 😕 دوس على الشاشة وجرب مرة ثانية');
       },
     });
     speech.start();
   }
 
-  function stopListening() {
-    if (speech) { speech.stop(); speech = null; }
-    if (session) session.listening = false;
-    $('mic').classList.remove('on');
+  function pause() {
+    if (speech) speech.stop();
+    speech = null;
+    listening = false;
+    $('dot').classList.remove('on');
   }
 
-  function finish() {
-    const s = session;
-    stopListening();
-    for (let i = s.pointer; i < s.words.length; i++) if (s.states[i] === 'pending') s.states[i] = s.words[i].optional ? 'skipped' : 'missed';
-    const required = s.words.filter(w => !w.optional).length;
-    const matched = s.words.filter((w, i) => !w.optional && s.states[i] === 'matched').length;
-    const score = Math.round(matched / required * 100);
-    const prev = bestOf(s.item.id);
-    if (prev === null || score > prev) store.set('best:' + s.item.id, score);
-
-    const el = $('s-score');
-    el.textContent = score + '%';
-    el.className = 'score' + (score >= 80 ? '' : score >= 50 ? ' mid' : ' low');
-    $('s-verdict').textContent = score >= 95 ? 'حافظه حفظ 🔥' : score >= 80 ? 'زين، بس راجع الكلمات الحمر' : score >= 50 ? 'نص ونص، عيده مرة لخ' : 'يحتاج مراجعة 📖';
-    const secs = s.startedAt ? Math.round((Date.now() - s.startedAt) / 1000) : 0;
-    $('s-stats').innerHTML = '';
-    [`💡 ${s.hintsUsed} تلميح`, `⏱️ ${secs} ثانية`, `✅ ${matched} من ${required} كلمة`].forEach(t => {
-      const span = document.createElement('span'); span.textContent = t; $('s-stats').appendChild(span);
-    });
-    $('s-prompt').textContent = s.item.prompt;
-    renderAnswer($('s-answer'));
-    show('result');
+  // The phone sits untouched while the student recites, so keep the screen on.
+  let wakeLock = null;
+  function keepAwake() {
+    if (wakeLock || !navigator.wakeLock) return;
+    navigator.wakeLock.request('screen').then(l => { wakeLock = l; l.addEventListener('release', () => { wakeLock = null; }); }).catch(() => {});
   }
 
-  // ---------- wiring ----------
-  $('mic').onclick = () => {
-    if (!session) return;
-    if (session.listening) { stopListening(); setStatus('وكفت التسميع. دوس المايك تكمّل'); }
-    else startListening();
-  };
-  $('stuck').onclick = () => { if (session) showHint(); };
-  $('done').onclick = () => { if (session) finish(); };
-  $('back').onclick = () => { stopListening(); session = null; renderHome(); show('home'); };
-  $('again').onclick = () => startItem(session.item);
-  $('next').onclick = () => {
-    const i = chapter.items.indexOf(session.item);
-    startItem(chapter.items[(i + 1) % chapter.items.length]);
-  };
-  $('to-home').onclick = () => { session = null; renderHome(); show('home'); };
-
-  $('open-settings').onclick = () => {
-    $('set-lang').value = settings.lang;
-    $('set-stall').value = String(settings.stall);
-    $('set-heard').checked = settings.showHeard;
-    $('settings').showModal();
-  };
-  $('settings').addEventListener('close', () => {
-    settings.lang = $('set-lang').value;
-    settings.stall = Number($('set-stall').value);
-    settings.showHeard = $('set-heard').checked;
-    store.set('settings', settings);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) pause();
+    else if (st) listen();
   });
 
-  // Android back button: leave the recite/result screen instead of closing the app.
-  const cap = window.Capacitor;
-  if (cap && cap.isNativePlatform && cap.isNativePlatform()) {
-    const App = cap.registerPlugin('App');
-    App.addListener('backButton', () => {
-      if (!$('home').hidden) App.exitApp();
-      else $('back').click();
-    });
-  }
+  // Tapping starts the mic if it isn't on, otherwise asks for a stronger hint.
+  $('stage').addEventListener('click', () => {
+    if (!st) return;
+    if (!listening) { listen(); return; }
+    showHint(Math.min(3, st.hint + 1));
+  });
 
-  // For testing in a browser without a microphone: Samaali.say('...').
+  // For testing without a microphone: Samaali.say('...') is one new speech
+  // segment; pass the same segment number again to send a longer partial.
   window.Samaali = {
-    say(text) {
-      if (!session) return;
-      if (!session.listening) { session.listening = true; session.startedAt = session.startedAt || Date.now(); }
-      onHeard(text, (session.segment || 0) + 1);
+    say(text, segment) {
+      if (!st) return;
+      listening = true;
+      onHeard(text, segment === undefined ? st.segment + 1 : segment);
     },
+    state() {
+      return st && { id: items[st.index].id, pointer: st.pointer, length: st.words.length, hint: st.hint, listening };
+    },
+    timing,
   };
-
-  function loadChapter(id) {
-    const entry = index.chapters.find(c => c.id === id) || index.chapters[0];
-    return fetch(entry.file)
-      .then(r => r.json())
-      .then(data => {
-        chapter = data;
-        chapterId = entry.id;
-        filter = 'الكل';
-        store.set('chapter', chapterId);
-        renderHome();
-      });
-  }
 
   fetch('data/index.json')
     .then(r => r.json())
-    .then(data => { index = data; return loadChapter(chapterId); });
+    .then(index => Promise.all(index.chapters.map(c => fetch(c.file).then(r => r.json()))))
+    .then(chapters => {
+      chapters.forEach(ch => items.push(...ch.items));
+      entries = items.map(it => ({ words: Match.buildWords(it), prompt: Match.promptWords(it.prompt) }));
+      const saved = items.findIndex(it => it.id === store.get('pos', null));
+      begin(saved < 0 ? 0 : saved);
+      listen();
+    })
+    .catch(() => setNotice('ما كدرت أحمّل الأسئلة 😕'));
 })();

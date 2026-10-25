@@ -1,135 +1,108 @@
-// Drives the web build in Chromium: opens a question, "says" the answer in
-// pieces through the test hook, and checks hints, progress and the result.
+// Drives the web build in Chromium with a fake speech recognizer: the screen
+// starts empty, hints pop up on silence and grow, finished items cheer and move
+// on, and the app finds what the student is reciting from anywhere in the booklet.
+const assert = require('assert');
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..', 'www');
+const shots = process.argv[2];
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webp': 'image/webp', '.woff2': 'font/woff2' };
 const server = http.createServer((req, res) => {
   const p = path.join(root, decodeURIComponent(req.url.split('?')[0]).replace(/\/$/, '/index.html'));
   fs.readFile(p, (err, buf) => { if (err) { res.writeHead(404); res.end(); return; } res.writeHead(200, { 'content-type': types[path.extname(p)] || 'application/octet-stream' }); res.end(buf); });
 });
+
+// Stands in for Chrome's recognizer; the test feeds it results through window.__rec.
+function fakeRecognizer() {
+  window.SpeechRecognition = window.webkitSpeechRecognition = class {
+    start() { window.__rec = this; }
+    stop() {}
+  };
+}
+
 (async () => {
   await new Promise(r => server.listen(8765, r));
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 400, height: 860 } });
+  await page.addInitScript(fakeRecognizer);
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
+  const state = () => page.evaluate(() => Samaali.state());
+  const visible = sel => page.isVisible(sel);
+  const shot = name => shots && page.screenshot({ path: path.join(shots, name + '.png') });
+  const imageLoaded = () => page.waitForFunction(() => { const i = document.getElementById('hint-img'); return i.complete && i.naturalWidth > 0; });
+
   await page.goto('http://localhost:8765/');
-  await page.waitForSelector('.q-row');
-  const rows = await page.$$eval('.q-row', r => r.length);
-  console.log('questions listed:', rows);
-  await page.screenshot({ path: process.argv[2] + '/home.png' });
+  await page.waitForFunction(() => window.Samaali && Samaali.state() && Samaali.state().listening);
+  await page.evaluate(() => { Samaali.timing.stall = 700; Samaali.timing.stage = 900; });
 
-  await page.click('.q-row');
-  await page.evaluate(() => Samaali.say('جهاز يتألف من زوج من الصفائح'));
-  await page.waitForTimeout(5600); // longer than the default 5 s stall
-  const hintVisible = await page.isVisible('#hint');
-  console.log('hint after stall:', hintVisible, await page.getAttribute('#hint-img', 'src'));
-  await page.screenshot({ path: process.argv[2] + '/recite-hint.png' });
+  // An empty screen: nothing shows until the student goes quiet.
+  assert.strictEqual((await state()).id, 'c1-def-capacitor');
+  assert.ok(!(await visible('#hint')) && !(await visible('#notice')), 'screen starts empty');
+  await shot('blank');
 
-  await page.evaluate(() => Samaali.say('الموصلة يفصل بينهما عازل'));
-  console.log('hint hidden after moving to next chunk:', !(await page.isVisible('#hint')));
-  await page.evaluate(() => Samaali.say('تستعمل لتخزين الشحنات الكهربائية والطاقه الكهربائيه'));
-  await page.waitForSelector('#result:not([hidden])');
-  console.log('score:', await page.textContent('#s-score'), '|', await page.textContent('#s-stats'));
-  await page.screenshot({ path: process.argv[2] + '/result.png', fullPage: true });
+  // Quiet before starting: the question and the first meme card.
+  await page.waitForSelector('#hint:not([hidden])');
+  await imageLoaded();
+  assert.strictEqual(await page.textContent('#hint-q'), 'عرّف المتسعة');
+  assert.ok(await visible('#hint-q'));
+  assert.ok((await page.getAttribute('#hint-img', 'src')).endsWith('c1-def-capacitor-1.webp'));
+  await shot('hint-question');
 
-  await page.click('#to-home');
-  console.log('best chip:', await page.textContent('.q-row .best'));
+  // Reciting the first chunk moves on and clears the card.
+  await page.evaluate(() => Samaali.say('جهاز يتألف من زوج من الصفائح الموصلة'));
+  assert.ok(!(await visible('#hint')), 'hint clears when the chunk changes');
 
-  await page.click('#chapters button:nth-child(2)');
-  await page.waitForFunction(() => document.querySelectorAll('.q-row').length === 46);
-  console.log('chapter 2 questions:', await page.$$eval('.q-row', r => r.length));
-  await page.screenshot({ path: process.argv[2] + '/home-ch2.png' });
-  await page.click('text=لا نشعر بسخونة');
-  await page.evaluate(() => Samaali.say('بسبب عدم تولد تيارات دوامه تخترق اليد'));
-  await page.waitForSelector('#result:not([hidden])');
-  console.log('chapter 2 score:', await page.textContent('#s-score'));
+  // Quiet mid-answer: card for the next chunk without the question, then words, then the whole chunk.
+  await page.waitForSelector('#hint:not([hidden])');
+  assert.ok(!(await visible('#hint-q')));
+  assert.ok((await page.getAttribute('#hint-img', 'src')).endsWith('c1-def-capacitor-2.webp'));
+  await page.waitForSelector('#hint-words:not([hidden])');
+  assert.strictEqual(await page.textContent('#hint-words'), 'يفصل بينهما ...');
+  await page.waitForFunction(() => document.getElementById('hint-words').textContent === 'يفصل بينهما عازل');
+  await imageLoaded();
+  await shot('hint-words');
 
-  await page.click('#to-home');
-  await page.click('#chapters button:nth-child(3)');
-  await page.waitForFunction(() => document.querySelectorAll('.q-row').length === 69);
-  console.log('chapter 3 questions:', await page.$$eval('.q-row', r => r.length));
-  await page.click('#filters button:has-text("نشاط")');
-  console.log('chapter 3 activities:', await page.$$eval('.q-row', r => r.length));
-  await page.screenshot({ path: process.argv[2] + '/home-ch3.png' });
-  await page.click('#filters button:has-text("الكل")');
-  await page.click('text=لكن ينجز شغلاً');
-  await page.click('#stuck');
-  await page.waitForFunction(() => { const i = document.getElementById('hint-img'); return i.complete && i.naturalWidth > 0; });
-  console.log('chapter 3 hint image:', await page.$eval('#hint-img', i => i.getAttribute('src')));
-  await page.evaluate(() => Samaali.say('لأن الشغل المنجز لا يعتمد على اتجاه التيار'));
-  await page.waitForSelector('#result:not([hidden])');
-  console.log('chapter 3 score:', await page.textContent('#s-score'));
+  // Finishing the item cheers and moves to the next one.
+  await page.evaluate(() => Samaali.say('يفصل بينهما عازل تستعمل لتخزين الشحنات الكهربائية والطاقة الكهربائية'));
+  assert.ok(await visible('#cheer'), 'cheer after finishing');
+  await shot('cheer');
+  assert.strictEqual((await state()).id, 'c1-def-capacitance');
+  assert.ok(!(await visible('#hint')));
 
-  await page.click('#to-home');
-  await page.click('#chapters button:nth-child(4)');
-  await page.waitForFunction(() => (document.querySelector('.q-row .q-text') || {}).textContent === 'عرّف الموجات الميكانيكية');
-  console.log('chapter 4 questions:', await page.$$eval('.q-row', r => r.length));
-  await page.click('text=ما المقصود بالرادار؟');
-  await page.evaluate(() => Samaali.say('تعني الكشف وتحديد البعد'));
-  await page.evaluate(() => Samaali.say('بواسطة الموجات الراديويه'));
-  await page.waitForSelector('#result:not([hidden])');
-  console.log('chapter 4 score:', await page.textContent('#s-score'));
+  // Jumping to an answer in another chapter, mid-sentence.
+  await page.evaluate(() => Samaali.say('هو جسيم له صفات الالكترون ولكن شحنته موجبة'));
+  let s = await state();
+  assert.strictEqual(s.id, 'c9-def-positron');
+  assert.ok(s.pointer > 5, 'follows from where they were: ' + s.pointer);
 
-  await page.click('#to-home');
-  await page.click('#chapters button:nth-child(5)');
-  await page.waitForFunction(() => (document.querySelector('.q-row .q-text') || {}).textContent === 'ما المقصود بتداخل الضوء؟');
-  console.log('chapter 5 questions:', await page.$$eval('.q-row', r => r.length));
-  await page.screenshot({ path: process.argv[2] + '/home-ch5.png' });
-  await page.click('text=ما سبب زرقة السماء نهاراً؟');
-  await page.click('#stuck');
-  await page.waitForFunction(() => { const i = document.getElementById('hint-img'); return i.complete && i.naturalWidth > 0; });
-  console.log('chapter 5 hint image:', await page.$eval('#hint-img', i => i.getAttribute('src')));
-  await page.evaluate(() => Samaali.say('وذلك بسبب زيادة استطارة اللون الازرق'));
-  await page.evaluate(() => Samaali.say('وان شدة الاستطارة تتناسب عكسيا مع الاس الرابع للطول الموجي'));
-  await page.waitForSelector('#result:not([hidden])');
-  console.log('chapter 5 score:', await page.textContent('#s-score'));
+  // Saying a question, then its answer growing through partial results of one segment.
+  await page.evaluate(() => Samaali.say('ما المقصود بالليزر', 900));
+  assert.strictEqual((await state()).id, 'c8-def-laser');
+  await page.evaluate(() => Samaali.say('ما المقصود بالليزر تضخيم الضوء', 900));
+  assert.strictEqual((await state()).pointer, 2);
+  await page.evaluate(() => Samaali.say('ما المقصود بالليزر تضخيم الضوء بالانبعاث المحفز للاشعاع', 900));
+  s = await state();
+  assert.notStrictEqual(s.id, 'c8-def-laser', 'laser item finished');
 
-  await page.click('#to-home');
-  await page.click('#chapters button:nth-child(6)');
-  await page.waitForFunction(() => (document.querySelector('.q-row .q-text') || {}).textContent.startsWith('ما النظرية التي فسرت'));
-  console.log('chapter 6 questions:', await page.$$eval('.q-row', r => r.length));
-  await page.click('text=على ماذا يعتمد جهد الإيقاف (جهد القطع)؟');
-  await page.evaluate(() => Samaali.say('تردد الضوء الساقط ونوع مادة سطح المعدن الباعث'));
-  await page.waitForSelector('#result:not([hidden])');
-  console.log('chapter 6 score:', await page.textContent('#s-score'));
+  // The real speech path: results from the recognizer, then a restart after a pause.
+  await page.evaluate(() => Samaali.say('هو جسيم له صفات الالكترون ولكن شحنته موجبة'));
+  await page.evaluate(() => {
+    const result = t => ({ results: [Object.assign([{ transcript: t }], { isFinal: false })] });
+    window.__rec.onresult(result('ويدعى مضاد'));
+    window.__rec.onresult(result('ويدعى مضاد الالكترون'));
+  });
+  assert.ok(await visible('#cheer'), 'finished through recognizer results');
 
-  await page.click('#to-home');
-  await page.click('#chapters button:nth-child(7)');
-  await page.waitForFunction(() => (document.querySelector('.q-row .q-text') || {}).textContent === 'ما أساس عمل الأجهزة الإلكترونية؟');
-  console.log('chapter 7 questions:', await page.$$eval('.q-row', r => r.length));
-  await page.click('text=ما سبب مرور التيار العكسي؟');
-  await page.click('#stuck');
-  await page.waitForFunction(() => { const i = document.getElementById('hint-img'); return i.complete && i.naturalWidth > 0; });
-  console.log('chapter 7 hint image:', await page.$eval('#hint-img', i => i.getAttribute('src')));
-  await page.evaluate(() => Samaali.say('بسبب الحاملات الأقلية المتولدة بالتأثير الحراري'));
-  await page.waitForSelector('#result:not([hidden])');
-  console.log('chapter 7 score:', await page.textContent('#s-score'));
-  await page.click('#to-home');
-  await page.click('#chapters button:nth-child(8)');
-  await page.waitForFunction(() => (document.querySelector('.q-row .q-text') || {}).textContent === 'ما أهم النماذج لدراسة تركيب المادة؟');
-  console.log('chapter 8 questions:', await page.$$eval('.q-row', r => r.length));
-  await page.click('text=ما المقصود بالليزر (Laser)؟');
-  await page.click('#stuck');
-  await page.waitForFunction(() => { const i = document.getElementById('hint-img'); return i.complete && i.naturalWidth > 0; });
-  console.log('chapter 8 hint image:', await page.$eval('#hint-img', i => i.getAttribute('src')));
-  await page.evaluate(() => Samaali.say('تضخيم الضوء بالانبعاث المحفز للاشعاع'));
-  await page.waitForSelector('#result:not([hidden])');
-  console.log('chapter 8 score:', await page.textContent('#s-score'));
+  // Coming back later resumes at the same item.
+  const before = (await state()).id;
+  await page.reload();
+  await page.waitForFunction(() => window.Samaali && Samaali.state());
+  assert.strictEqual((await state()).id, before);
 
-  await page.click('#to-home');
-  await page.click('#chapters button:nth-child(9)');
-  await page.waitForFunction(() => (document.querySelector('.q-row .q-text') || {}).textContent === 'ما المجالات التي استثمرت فيها الطاقة النووية؟');
-  console.log('chapter 9 questions:', await page.$$eval('.q-row', r => r.length));
-  await page.click('text=ما المقصود بالبوزترون؟');
-  await page.click('#stuck');
-  await page.waitForFunction(() => { const i = document.getElementById('hint-img'); return i.complete && i.naturalWidth > 0; });
-  console.log('chapter 9 hint image:', await page.$eval('#hint-img', i => i.getAttribute('src')));
-  await page.evaluate(() => Samaali.say('هو جسيم له صفات الالكترون ولكن شحنته موجبة ويدعى مضاد الالكترون'));
-  await page.waitForSelector('#result:not([hidden])');
-  console.log('chapter 9 score:', await page.textContent('#s-score'));
   console.log('errors:', errors);
+  assert.deepStrictEqual(errors, []);
+  console.log('ui tests passed');
   await browser.close();
   server.close();
-})();
+})().catch(e => { console.error(e); process.exit(1); });

@@ -46,4 +46,19 @@ for (const it of data.items) {
   const second = M.align(words, first.pointer, 'مقدارها واحد كولوم عندما يكون');
   assert.ok(second.pointer > first.pointer);
 }
+// locate: finds the item from words in the middle of an answer, or from its question
+{
+  const fs = require('fs'), path = require('path');
+  const index = require('../www/data/index.json');
+  const items = index.chapters.flatMap(c => JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'www', c.file))).items);
+  const entries = items.map(it => ({ words: M.buildWords(it), prompt: M.promptWords(it.prompt) }));
+  const at = id => items.findIndex(it => it.id === id);
+  const mid = M.locate(entries, 'زوج من الصفائح الموصلة يفصل بينهما');
+  assert.strictEqual(mid && mid.index, at('c1-def-capacitor'));
+  assert.ok(mid.start > 0 && mid.pointer > mid.start);
+  const asked = M.locate(entries, 'ما المقصود بالليزر');
+  assert.strictEqual(asked && asked.index, at('c8-def-laser'));
+  assert.strictEqual(asked.pointer, 0);
+  assert.strictEqual(M.locate(entries, 'شلونك اليوم شكو ماكو'), null);
+}
 console.log('match tests passed');
