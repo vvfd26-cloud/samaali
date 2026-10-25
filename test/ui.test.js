@@ -94,6 +94,18 @@ const server = http.createServer((req, res) => {
   await page.evaluate(() => Samaali.say('تردد الضوء الساقط ونوع مادة سطح المعدن الباعث'));
   await page.waitForSelector('#result:not([hidden])');
   console.log('chapter 6 score:', await page.textContent('#s-score'));
+
+  await page.click('#to-home');
+  await page.click('#chapters button:nth-child(7)');
+  await page.waitForFunction(() => (document.querySelector('.q-row .q-text') || {}).textContent === 'ما أساس عمل الأجهزة الإلكترونية؟');
+  console.log('chapter 7 questions:', await page.$$eval('.q-row', r => r.length));
+  await page.click('text=ما سبب مرور التيار العكسي؟');
+  await page.click('#stuck');
+  await page.waitForFunction(() => { const i = document.getElementById('hint-img'); return i.complete && i.naturalWidth > 0; });
+  console.log('chapter 7 hint image:', await page.$eval('#hint-img', i => i.getAttribute('src')));
+  await page.evaluate(() => Samaali.say('بسبب الحاملات الأقلية المتولدة بالتأثير الحراري'));
+  await page.waitForSelector('#result:not([hidden])');
+  console.log('chapter 7 score:', await page.textContent('#s-score'));
   console.log('errors:', errors);
   await browser.close();
   server.close();
