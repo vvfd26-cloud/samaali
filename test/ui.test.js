@@ -36,6 +36,15 @@ const server = http.createServer((req, res) => {
 
   await page.click('#to-home');
   console.log('best chip:', await page.textContent('.q-row .best'));
+
+  await page.click('#chapters button:nth-child(2)');
+  await page.waitForFunction(() => document.querySelectorAll('.q-row').length === 46);
+  console.log('chapter 2 questions:', await page.$$eval('.q-row', r => r.length));
+  await page.screenshot({ path: process.argv[2] + '/home-ch2.png' });
+  await page.click('text=لا نشعر بسخونة');
+  await page.evaluate(() => Samaali.say('بسبب عدم تولد تيارات دوامه تخترق اليد'));
+  await page.waitForSelector('#result:not([hidden])');
+  console.log('chapter 2 score:', await page.textContent('#s-score'));
   console.log('errors:', errors);
   await browser.close();
   server.close();

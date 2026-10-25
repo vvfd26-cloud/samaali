@@ -1,5 +1,6 @@
 {
   "chapters": [
-    { "id": "ch1", "title": "المتسعات", "file": "data/ch1-capacitors.json" }
+    { "id": "ch1", "title": "المتسعات", "file": "data/ch1-capacitors.json" },
+    { "id": "ch2", "title": "الحث الكهرومغناطيسي", "file": "data/ch2-induction.json" }
   ]
 }

@@ -12,7 +12,9 @@
   };
 
   const settings = Object.assign({ lang: 'ar-IQ', stall: 5000, showHeard: true }, store.get('settings', {}));
+  let index = null;
   let chapter = null;
+  let chapterId = store.get('chapter', null);
   let filter = 'الكل';
   let session = null;
 
@@ -26,7 +28,17 @@
   function bestOf(id) { return store.get('best:' + id, null); }
 
   function renderHome() {
-    $('chapter-title').textContent = `${chapter.subject} · الفصل ${chapter.chapter}: ${chapter.chapter_title}`;
+    $('chapter-title').textContent = chapter.subject;
+    const chapters = $('chapters');
+    chapters.innerHTML = '';
+    index.chapters.forEach(c => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = c.title;
+      b.setAttribute('aria-pressed', String(c.id === chapterId));
+      b.onclick = () => { if (c.id !== chapterId) loadChapter(c.id); };
+      chapters.appendChild(b);
+    });
     const done = chapter.items.filter(i => (bestOf(i.id) || 0) >= 80).length;
     $('overall-bar').style.width = (done / chapter.items.length * 100) + '%';
     $('overall-text').textContent = `حافظ ${done} من ${chapter.items.length}`;
@@ -271,9 +283,20 @@
     },
   };
 
+  function loadChapter(id) {
+    const entry = index.chapters.find(c => c.id === id) || index.chapters[0];
+    return fetch(entry.file)
+      .then(r => r.json())
+      .then(data => {
+        chapter = data;
+        chapterId = entry.id;
+        filter = 'الكل';
+        store.set('chapter', chapterId);
+        renderHome();
+      });
+  }
+
   fetch('data/index.json')
     .then(r => r.json())
-    .then(index => fetch(index.chapters[0].file))
-    .then(r => r.json())
-    .then(data => { chapter = data; renderHome(); });
+    .then(data => { index = data; return loadChapter(chapterId); });
 })();

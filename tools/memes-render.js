@@ -2,8 +2,9 @@ const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const [,, dataPath, fontsDir, outDir, only] = process.argv;
 const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-const css = fs.readFileSync(path.join(fontsDir, 'local.css'), 'utf8')
-  .replace(/url\('fonts\/([^']+)'\)/g, (_, f) => `url(data:font/woff2;base64,${fs.readFileSync(path.join(fontsDir, f)).toString('base64')})`);
+// Reads www/fonts/fonts.css and inlines each font file, so the cards render offline.
+const css = fs.readFileSync(path.join(fontsDir, 'fonts.css'), 'utf8')
+  .replace(/url\('(?:fonts\/)?([^']+)'\)/g, (_, f) => `url(data:font/woff2;base64,${fs.readFileSync(path.join(fontsDir, f)).toString('base64')})`);
 const palette = {
   'تعريف': ['#2457d6', '#6ea0ff'], 'تعليل': ['#d2541c', '#ffa25e'],
   'تطبيقات': ['#13895f', '#5fd6a4'], 'اذكر': ['#7a3fd1', '#b892ff'], 'عوامل': ['#7a3fd1', '#b892ff'],
@@ -48,7 +49,7 @@ const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&
       await page.setContent(html, { waitUntil: 'load' });
       await page.evaluate(() => document.fonts.ready);
       await page.screenshot({ path: path.join(outDir, name), type: 'png' });
-      ch.image = `memes/ch1/${name}`;
+      ch.image = ch.image || `memes/ch1/${name}`;
       n++;
     }
   }
