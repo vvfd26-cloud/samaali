@@ -1,0 +1,824 @@
+{
+  "subject": "الفيزياء - السادس العلمي",
+  "chapter": 1,
+  "chapter_title": "المتسعات",
+  "source": "ملزمة كلاميات حسين محمد، صفحات 4 الى 25",
+  "items": [
+    {
+      "id": "c1-def-capacitor",
+      "type": "تعريف",
+      "prompt": "عرّف المتسعة",
+      "page": 5,
+      "chunks": [
+        {
+          "text": "جهاز يتألف من زوج من الصفائح الموصلة",
+          "emoji": "🥪",
+          "meme": "صورة سندويچة خبزتين: «صفيحتين موصلات... والحشوة جاية»",
+          "scene": "سندويچة",
+          "caption": "خبزتين موصلات... والحشوة بعدين",
+          "image": "memes/ch1/c1-def-capacitor-1.webp"
+        },
+        {
+          "text": "يفصل بينهما عازل",
+          "emoji": "🧱",
+          "meme": "ميم «حدود» بين اثنين متزاعلين: «عازل بالنص لا يتلامسون»",
+          "scene": "اثنين متزاعلين",
+          "caption": "عازل بالنص، ممنوع اللمس",
+          "image": "memes/ch1/c1-def-capacitor-2.webp"
+        },
+        {
+          "text": "تستعمل لتخزين الشحنات الكهربائية والطاقة الكهربائية",
+          "emoji": "🔋",
+          "meme": "ميم سنجاب يخزن جوز بخدوده: «يخزن شحنات وطاقة»",
+          "scene": "سنجاب يخزن بخدوده",
+          "caption": "أخزن... شحنات وطاقة",
+          "image": "memes/ch1/c1-def-capacitor-3.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-def-capacitance",
+      "type": "تعريف",
+      "prompt": "ما المقصود بالسعة؟ وبأي وحدة تقاس؟",
+      "page": 5,
+      "chunks": [
+        {
+          "text": "نسبة بين مقدار الشحنة المختزنة Q في أي من صفيحتيها",
+          "emoji": "➗",
+          "meme": "ميم «Q فوك» كسر: الشحنة قاعدة فوك الخط",
+          "scene": "كسر",
+          "caption": "منو فوك الخط؟ الشحنة",
+          "image": "memes/ch1/c1-def-capacitance-1.webp"
+        },
+        {
+          "text": "الى مقدار فرق الجهد الكهربائي ΔV بين صفيحتيها",
+          "emoji": "⚡",
+          "meme": "ΔV نايم جوه الخط: «اني المقام»",
+          "scene": "كسر",
+          "caption": "وآني المقام... فرق الجهد",
+          "image": "memes/ch1/c1-def-capacitance-2.webp"
+        },
+        {
+          "text": "وتقاس بالفاراد",
+          "emoji": "🧔",
+          "meme": "صورة فاراداي بنظارات شمسية: «Deal with it»",
+          "scene": "فاراداي بنظارات",
+          "caption": "وحدتي باسمي 😎",
+          "image": "memes/ch1/c1-def-capacitance-3.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-def-farad",
+      "type": "تعريف",
+      "prompt": "ما المقصود بالفاراد؟",
+      "page": 6,
+      "chunks": [
+        {
+          "text": "سعة المتسعة التي تختزن شحنة مقدارها واحد كولوم",
+          "emoji": "1️⃣",
+          "meme": "ميم «واحد بس» كوب واحد مليان شحنة",
+          "scene": "كوب واحد",
+          "caption": "واحد بس... كولوم",
+          "image": "memes/ch1/c1-def-farad-1.webp"
+        },
+        {
+          "text": "عندما يكون فرق الجهد بين طرفيها واحد فولط",
+          "emoji": "🔌",
+          "meme": "ميم توأم متطابق: «1 كولوم و 1 فولط»",
+          "scene": "توأم",
+          "caption": "1 و 1... فولط",
+          "image": "memes/ch1/c1-def-farad-2.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-def-parallel-plate",
+      "type": "تعريف",
+      "prompt": "ما المقصود بالمتسعة ذات الصفيحتين المتوازيتين؟",
+      "page": 5,
+      "chunks": [
+        {
+          "text": "تتألف من صفيحتين موصلتين مستويتين متماثلتين",
+          "emoji": "👯",
+          "meme": "ميم «Spider-Man يأشر على Spider-Man»: صفيحتين متماثلات",
+          "scene": "سبايدر مان يأشر على سبايدر مان",
+          "caption": "احنا متماثلات!",
+          "image": "memes/ch1/c1-def-parallel-plate-1.webp"
+        },
+        {
+          "text": "معزولتين عن بعضهما ومتوازيتين",
+          "emoji": "🛤️",
+          "meme": "سكة قطار: «متوازيات وما يلتقون أبداً» 💔",
+          "scene": "سكة قطار",
+          "caption": "نمشي سوه وما نلتقي 💔",
+          "image": "memes/ch1/c1-def-parallel-plate-2.webp"
+        },
+        {
+          "text": "مساحة كل منهما A وتبعدان عن بعضهما بالبعد d",
+          "emoji": "📏",
+          "meme": "مسطرة بين اثنين: «حافظ على المسافة d»",
+          "scene": "مسطرة",
+          "caption": "مساحة A ... ومسافة d",
+          "image": "memes/ch1/c1-def-parallel-plate-3.webp"
+        },
+        {
+          "text": "مشحونتين بشحنتين متساويتين مقداراً ومختلفتين نوعاً",
+          "emoji": "➕➖",
+          "meme": "ميم Yin Yang: نفس المقدار، عكس النوع",
+          "scene": "يين يانگ",
+          "caption": "نفس المقدار، عكس النوع",
+          "image": "memes/ch1/c1-def-parallel-plate-4.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-def-dielectric",
+      "type": "تعريف",
+      "prompt": "عرّف العازل الكهربائي",
+      "page": 7,
+      "chunks": [
+        {
+          "text": "مواد غير موصلة كهربائياً في الظروف الاعتيادية",
+          "emoji": "🚫⚡",
+          "meme": "ميم كلب يرفض: «ما أوصل تيار، مو شغلي»",
+          "scene": "كلب يرفض",
+          "caption": "ما أوصل، مو شغلي",
+          "image": "memes/ch1/c1-def-dielectric-1.webp"
+        },
+        {
+          "text": "تعمل على تقليل مقدار المجال الكهربائي الموضوعة فيه",
+          "emoji": "📉",
+          "meme": "ميم Stonks بالمقلوب: «المجال نازل»",
+          "scene": "ستونكس بالمقلوب",
+          "caption": "المجال نازل 📉",
+          "image": "memes/ch1/c1-def-dielectric-2.webp"
+        },
+        {
+          "text": "مثل اللدائن والورق والمشمع والزجاج",
+          "emoji": "📄🪟",
+          "meme": "كولاج: كيس نايلون، ورقة، مشمع، شباك زجاج",
+          "scene": "كولاج",
+          "caption": "نايلون، ورق، مشمع، زجاج",
+          "image": "memes/ch1/c1-def-dielectric-3.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-def-dielectric-strength",
+      "type": "تعريف",
+      "prompt": "عرّف قوة العزل الكهربائي",
+      "page": 9,
+      "chunks": [
+        {
+          "text": "أقصى مقدار لمجال كهربائي",
+          "emoji": "🏋️",
+          "meme": "ميم رافع أثقال: «أقصى وزن يشيله»",
+          "scene": "رافع أثقال",
+          "caption": "أقصى شي أكدر أشيله",
+          "image": "memes/ch1/c1-def-dielectric-strength-1.webp"
+        },
+        {
+          "text": "يمكن أن تتحمله المادة العازلة",
+          "emoji": "😤",
+          "meme": "ميم «This is fine» الكلب والنار: «بعدني متحمل»",
+          "scene": "This is fine",
+          "caption": "بعدني متحمل...",
+          "image": "memes/ch1/c1-def-dielectric-strength-2.webp"
+        },
+        {
+          "text": "قبل حصول الانهيار الكهربائي للعازل",
+          "emoji": "💥",
+          "meme": "ميم انهيار عصبي: «خلص ما أتحمل» ⚡",
+          "scene": "انهيار عصبي",
+          "caption": "خلص! انهرت",
+          "image": "memes/ch1/c1-def-dielectric-strength-3.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-def-dielectric-constant",
+      "type": "تعريف",
+      "prompt": "عرّف ثابت العزل الكهربائي",
+      "page": 9,
+      "chunks": [
+        {
+          "text": "نسبة بين سعة المتسعة بوجود العازل",
+          "emoji": "➗",
+          "meme": "ميم Drake يأشر بإعجاب: «سعة ويه عازل» فوك الكسر",
+          "scene": "دريك يحب",
+          "caption": "الفوك: ويه عازل",
+          "image": "memes/ch1/c1-def-dielectric-constant-1.webp"
+        },
+        {
+          "text": "الى سعتها بوجود الفراغ أو الهواء",
+          "emoji": "💨",
+          "meme": "Drake يرفض: «سعة بالهواء» جوه الكسر",
+          "scene": "دريك يرفض",
+          "caption": "الجوه: بالهواء",
+          "image": "memes/ch1/c1-def-dielectric-constant-2.webp"
+        },
+        {
+          "text": "وهو كمية مجردة من الوحدات",
+          "emoji": "🫥",
+          "meme": "ميم شخص بدون هدوم بالشارع: «بدون وحدات»",
+          "scene": "بدون هدوم",
+          "caption": "ما عندي وحدات",
+          "image": "memes/ch1/c1-def-dielectric-constant-3.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-def-field",
+      "type": "تعريف",
+      "prompt": "عرّف المجال الكهربائي بين صفيحتي المتسعة",
+      "page": 6,
+      "chunks": [
+        {
+          "text": "نسبة فرق الجهد ΔV بين صفيحتي المتسعة",
+          "emoji": "⚡",
+          "meme": "ΔV فوك الكسر لابس تاج 👑",
+          "scene": "كسر بتاج",
+          "caption": "فرق الجهد فوك 👑",
+          "image": "memes/ch1/c1-def-field-1.webp"
+        },
+        {
+          "text": "الى البعد d بين الصفيحتين",
+          "emoji": "📏",
+          "meme": "d جوه الكسر ماسك مسطرة",
+          "scene": "كسر",
+          "caption": "والبعد جوه",
+          "image": "memes/ch1/c1-def-field-2.webp"
+        },
+        {
+          "text": "ووحدته فولط لكل متر V/m",
+          "emoji": "🛣️",
+          "meme": "لوحة سرعة بالشارع مكتوب عليها V/m",
+          "scene": "لوحة شارع",
+          "caption": "فولط لكل متر",
+          "image": "memes/ch1/c1-def-field-3.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-def-rc",
+      "type": "تعريف",
+      "prompt": "ما هي دائرة R-C؟",
+      "page": 15,
+      "chunks": [
+        {
+          "text": "دائرة تيار مستمر تتألف من مقاومة ومتسعة",
+          "emoji": "🤝",
+          "meme": "ميم المصافحة Epic Handshake: R و C",
+          "scene": "مصافحة إبك",
+          "caption": "R 🤝 C ... تيار مستمر",
+          "image": "memes/ch1/c1-def-rc-1.webp"
+        },
+        {
+          "text": "ويكون تيارها متغيراً مع الزمن",
+          "emoji": "⏳",
+          "meme": "ميم «مزاجه يتقلب»: تيار يتغير ويه الوقت",
+          "scene": "مزاجه يتقلب",
+          "caption": "التيار يتغير ويه الوقت",
+          "image": "memes/ch1/c1-def-rc-2.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-why-sphere",
+      "type": "تعليل",
+      "prompt": "علل: لا يستعمل الموصل الكروي المنفرد المعزول في تخزين الشحنات الكهربائية",
+      "page": 4,
+      "chunks": [
+        {
+          "text": "لأنه يخزن كمية محددة من الشحنات الكهربائية",
+          "emoji": "🎈",
+          "meme": "بالون صغير: «سعتي محدودة يا جماعة»",
+          "scene": "بالون صغير",
+          "caption": "سعتي محدودة يا جماعة",
+          "image": "memes/ch1/c1-why-sphere-1.webp"
+        },
+        {
+          "text": "والاستمرار في إضافة الشحنات يؤدي الى زيادة جهده الكهربائي",
+          "emoji": "📈",
+          "meme": "ميم Stonks: «الجهد يصعد»",
+          "scene": "ستونكس",
+          "caption": "الجهد يصعد 📈",
+          "image": "memes/ch1/c1-why-sphere-2.webp"
+        },
+        {
+          "text": "فيزداد فرق الجهد بينه وبين الهواء فيزداد المجال الكهربائي",
+          "emoji": "🌪️",
+          "meme": "ميم «Galaxy brain» يكبر درجة درجة",
+          "scene": "دماغ يكبر",
+          "caption": "فرق الجهد ← المجال يزيد",
+          "image": "memes/ch1/c1-why-sphere-3.webp"
+        },
+        {
+          "text": "مما يؤدي الى حصول تفريغ كهربائي خلال الهواء المحيط به",
+          "emoji": "⚡💥",
+          "meme": "بالون ينفجر بوجه واحد: «تفريغ!»",
+          "scene": "بالون ينفجر",
+          "caption": "تفريغ بالهوا!",
+          "image": "memes/ch1/c1-why-sphere-4.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-why-net-zero",
+      "type": "تعليل",
+      "prompt": "علل: صافي الشحنة على صفيحتي متسعة مشحونة يساوي صفر",
+      "page": 5,
+      "chunks": [
+        {
+          "text": "لأن الصفيحتين تحملان شحنتين متساويتين مقداراً",
+          "emoji": "⚖️",
+          "meme": "ميزان متعادل: «نفس المقدار»",
+          "scene": "ميزان",
+          "caption": "نفس المقدار",
+          "image": "memes/ch1/c1-why-net-zero-1.webp"
+        },
+        {
+          "text": "ومختلفتين نوعاً",
+          "emoji": "➕➖",
+          "meme": "ميم «+5 و −5 = صفر» بوجه بايخ 😐",
+          "scene": "وجه بايخ",
+          "caption": "+5 و −5 = صفر 😐",
+          "image": "memes/ch1/c1-why-net-zero-2.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-why-facing-surfaces",
+      "type": "تعليل",
+      "prompt": "علل: تقع الشحنات الموجبة والسالبة على السطحين المتقابلين للصفيحتين",
+      "page": 5,
+      "chunks": [
+        {
+          "text": "بسبب قوة التجاذب بين تلك الشحنات",
+          "emoji": "🧲❤️",
+          "meme": "ميم اثنين يباوعون على بعض من بعيد: «تجاذب»",
+          "scene": "نظرات من بعيد",
+          "caption": "تجاذب ❤️",
+          "image": "memes/ch1/c1-why-facing-surfaces-1.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-why-equipotential",
+      "type": "تعليل",
+      "prompt": "علل: جميع نقاط الصفيحة الواحدة للمتسعة المشحونة بجهد متساوٍ",
+      "page": 5,
+      "chunks": [
+        {
+          "text": "لأن صفيحتي المتسعة مصنوعتان من مادة موصلة",
+          "emoji": "🥇",
+          "meme": "صفيحة معدن تلمع: «موصلة»",
+          "scene": "معدن يلمع",
+          "caption": "موصلة",
+          "image": "memes/ch1/c1-why-equipotential-1.webp"
+        },
+        {
+          "text": "ومعزولتان",
+          "emoji": "🏝️",
+          "meme": "ميم شخص بجزيرة لوحده: «معزول»",
+          "scene": "جزيرة",
+          "caption": "ومعزولة",
+          "image": "memes/ch1/c1-why-equipotential-2.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-why-uniform-field",
+      "type": "تعليل",
+      "prompt": "علل: يكون المجال الكهربائي بين صفيحتي متسعة مشحونة منتظماً",
+      "page": 6,
+      "chunks": [
+        {
+          "text": "لأن البعد d بين الصفيحتين صغير جداً",
+          "emoji": "🤏",
+          "meme": "ميم «ههواية صغير» بإصبعين",
+          "scene": "إصبعين",
+          "caption": "البعد هواية صغير",
+          "image": "memes/ch1/c1-why-uniform-field-1.webp"
+        },
+        {
+          "text": "بالمقارنة مع أبعاد الصفيحة الواحدة",
+          "emoji": "🐘🐜",
+          "meme": "فيل جنب نملة: المقارنة",
+          "scene": "فيل ونملة",
+          "caption": "قارنه بالصفيحة",
+          "image": "memes/ch1/c1-why-uniform-field-2.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-why-field-decreases",
+      "type": "تعليل",
+      "prompt": "علل: يقل مقدار المجال الكهربائي بين صفيحتي المتسعة عند إدخال مادة عازلة بين صفيحتيها",
+      "page": 8,
+      "chunks": [
+        {
+          "text": "بسبب تولد مجال كهربائي داخل العازل Ed",
+          "emoji": "🐣",
+          "meme": "بيضة تفقس وتطلع Ed: «انولد مجال جديد»",
+          "scene": "بيضة تفقس",
+          "caption": "انولد مجال جوه العازل!",
+          "image": "memes/ch1/c1-why-field-decreases-1.webp"
+        },
+        {
+          "text": "يعاكس المجال الأصلي بين صفيحتي المتسعة E",
+          "emoji": "🙅",
+          "meme": "ميم «Two Spider-Men» يتعاكسون بالاتجاه",
+          "scene": "اثنين بعكس بعض",
+          "caption": "يعاكس الأصلي",
+          "image": "memes/ch1/c1-why-field-decreases-2.webp"
+        },
+        {
+          "text": "فيكون المجال المحصل EK = E − Ed",
+          "emoji": "➖",
+          "meme": "ميم «Math lady» تحسب E ناقص Ed",
+          "scene": "ست الرياضيات",
+          "caption": "E ناقص Ed",
+          "image": "memes/ch1/c1-why-field-decreases-3.webp"
+        },
+        {
+          "text": "لذلك يقل بنسبة ثابت العزل للمادة EK = E / K",
+          "emoji": "🍕",
+          "meme": "بيتزا متقسمة على K: «كل واحد ياخذ حصته»",
+          "scene": "بيتزا",
+          "caption": "تتقسم على K",
+          "image": "memes/ch1/c1-why-field-decreases-4.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-why-max-voltage",
+      "type": "تعليل",
+      "prompt": "علل: يحدد مقدار أقصى فرق جهد كهربائي يمكن أن تعمل عنده المتسعة",
+      "page": 9,
+      "chunks": [
+        {
+          "text": "لأن الاستمرار في زيادة فرق الجهد المسلط بين صفيحتيها",
+          "emoji": "🎚️",
+          "meme": "ميم واحد يرفع الصوت للآخر: «زيد زيد»",
+          "scene": "زيد زيد",
+          "caption": "نزيد فرق الجهد...",
+          "image": "memes/ch1/c1-why-max-voltage-1.webp"
+        },
+        {
+          "text": "يتسبب في ازدياد المجال الكهربائي بين الصفيحتين الى حد كبير جداً",
+          "emoji": "🌋",
+          "meme": "بركان على وشك ينفجر",
+          "scene": "بركان",
+          "caption": "المجال يكبر هواية",
+          "image": "memes/ch1/c1-why-max-voltage-2.webp"
+        },
+        {
+          "text": "قد يحصل عنده انهيار كهربائي للعازل نتيجة عبور شرارة كهربائية خلاله",
+          "emoji": "⚡",
+          "meme": "ميم «Surprised Pikachu» وشرارة تعبر",
+          "scene": "بيكاتشو مصدوم",
+          "caption": "شرارة عبرت العازل!",
+          "image": "memes/ch1/c1-why-max-voltage-3.webp"
+        },
+        {
+          "text": "فتتفرغ المتسعة من جميع شحنتها وهذا يعني تلف المتسعة",
+          "emoji": "🪦",
+          "meme": "ميم الشلة اللي تشيل التابوت ⚰️ «RIP متسعة»",
+          "scene": "شلة التابوت",
+          "caption": "تفرغت... وتلفت ⚰️",
+          "image": "memes/ch1/c1-why-max-voltage-4.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-why-parallel-increase",
+      "type": "تعليل",
+      "prompt": "علل: ازدياد مقدار السعة المكافئة لمجموعة متسعات مربوطة على التوازي",
+      "page": 11,
+      "chunks": [
+        {
+          "text": "بسبب زيادة المساحة السطحية المتقابلة لصفيحتي المتسعة المكافئة",
+          "emoji": "🛏️",
+          "meme": "سريرين ملزوقات: «المساحة صارت أكبر»",
+          "scene": "سريرين ملزوقات",
+          "caption": "المساحة صارت أكبر",
+          "image": "memes/ch1/c1-why-parallel-increase-1.webp"
+        },
+        {
+          "text": "بثبوت البعد بين الصفيحتين ونوع العازل",
+          "emoji": "📌",
+          "meme": "دبوس: «الباقي ثابت لا تلعب بي»",
+          "scene": "دبوس",
+          "caption": "البعد والعازل ثابتين",
+          "image": "memes/ch1/c1-why-parallel-increase-2.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-why-series-decrease",
+      "type": "تعليل",
+      "prompt": "علل: نقصان مقدار السعة المكافئة لمجموعة متسعات مربوطة على التوالي",
+      "page": 11,
+      "chunks": [
+        {
+          "text": "بسبب زيادة البعد بين صفيحتي المتسعة المكافئة",
+          "emoji": "🚶‍♂️↔️🚶",
+          "meme": "ميم «Long distance relationship»: البعد زاد",
+          "scene": "علاقة عن بعد",
+          "caption": "البعد زاد 💔",
+          "image": "memes/ch1/c1-why-series-decrease-1.webp"
+        },
+        {
+          "text": "بثبوت المساحة السطحية المتقابلة ونوع العازل",
+          "emoji": "📌",
+          "meme": "دبوس: «الباقي ثابت»",
+          "scene": "دبوس",
+          "caption": "المساحة والعازل ثابتين",
+          "image": "memes/ch1/c1-why-series-decrease-2.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-why-open-switch",
+      "type": "تعليل",
+      "prompt": "علل: المتسعة الموضوعة في دائرة التيار المستمر تعد مفتاحاً مفتوحاً",
+      "page": 25,
+      "chunks": [
+        {
+          "text": "لأنه بعد اكتمال شحن المتسعة",
+          "emoji": "🔋✅",
+          "meme": "بطارية موبايل 100%: «شبعت»",
+          "scene": "بطارية مليانة",
+          "caption": "شبعت شحن ✅",
+          "image": "memes/ch1/c1-why-open-switch-1.webp"
+        },
+        {
+          "text": "يتساوى فرق الجهد بين صفيحتيها مع فرق جهد البطارية",
+          "emoji": "🟰",
+          "meme": "ميم «They're the same picture»",
+          "scene": "نفس الصورة",
+          "caption": "جهدها = جهد البطارية",
+          "image": "memes/ch1/c1-why-open-switch-2.webp"
+        },
+        {
+          "text": "فينعدم فرق الجهد على طرفي المقاومة",
+          "emoji": "0️⃣",
+          "meme": "مقاومة قاعدة بدون شغل 😴",
+          "scene": "مقاومة نايمة",
+          "caption": "فرق الجهد عليها صفر",
+          "image": "memes/ch1/c1-why-open-switch-3.webp"
+        },
+        {
+          "text": "فيكون تيار الدائرة صفراً",
+          "emoji": "🚪",
+          "meme": "باب مفتوح ومحد يعبر: «التيار = صفر»",
+          "scene": "باب مفتوح",
+          "caption": "تيار = صفر 🚪",
+          "image": "memes/ch1/c1-why-open-switch-4.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-why-bigger-c-more-q",
+      "type": "تعليل",
+      "prompt": "علل: المتسعة ذات السعة الأكبر تستوعب شحنة بمقدار أكبر",
+      "page": 6,
+      "chunks": [
+        {
+          "text": "لأن سعة المتسعة تعد مقياساً لمقدار الشحنة",
+          "emoji": "🪣",
+          "meme": "سطل كبير وسطل صغير: «الكبير يشيل أكثر»",
+          "scene": "سطل كبير",
+          "caption": "الكبير يشيل أكثر",
+          "image": "memes/ch1/c1-why-bigger-c-more-q-1.webp"
+        },
+        {
+          "text": "أي أنها تتناسب معها طردياً",
+          "emoji": "📈",
+          "meme": "ميم «Stonks» الطردي يصعدون سوه",
+          "scene": "صعود سوه",
+          "caption": "طردي 📈",
+          "image": "memes/ch1/c1-why-bigger-c-more-q-2.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-q-dielectric-benefits",
+      "type": "اذكر",
+      "prompt": "أذكر فائدتين عمليتين من إدخال مادة عازلة كهربائياً تملأ الحيز بين صفيحتي متسعة بدلاً من الفراغ",
+      "page": 9,
+      "chunks": [
+        {
+          "text": "زيادة سعة المتسعة",
+          "emoji": "📦⬆️",
+          "meme": "ميم «Upgrade»: كارتون يكبر",
+          "scene": "أبگريد",
+          "caption": "السعة تكبر",
+          "image": "memes/ch1/c1-q-dielectric-benefits-1.webp"
+        },
+        {
+          "text": "منع الانهيار الكهربائي المبكر للعازل",
+          "emoji": "🛡️",
+          "meme": "درع كابتن أمريكا يصد شرارة",
+          "scene": "درع",
+          "caption": "لا تنهار مبكراً",
+          "image": "memes/ch1/c1-q-dielectric-benefits-2.webp"
+        },
+        {
+          "text": "عند تسليط فرق جهد كبير بين صفيحتيها",
+          "emoji": "⚡⚡",
+          "meme": "ميم «فولتية عالية» علامة خطر صفرة",
+          "scene": "خطر",
+          "caption": "جهد عالي ⚡",
+          "image": "memes/ch1/c1-q-dielectric-benefits-3.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-q-capacitance-factors",
+      "type": "عوامل",
+      "prompt": "ما العوامل التي تعتمد عليها سعة المتسعة ذات الصفيحتين المتوازيتين؟",
+      "page": 9,
+      "chunks": [
+        {
+          "text": "المساحة السطحية المتقابلة للصفيحتين وتتناسب معها طردياً",
+          "emoji": "🟦",
+          "meme": "بيتزا عائلية مقابل صغيرة: «الأكبر أحسن»",
+          "scene": "بيتزا عائلية",
+          "caption": "المساحة: طردي",
+          "image": "memes/ch1/c1-q-capacitance-factors-1.webp"
+        },
+        {
+          "text": "البعد d بين الصفيحتين وتتناسب معه عكسياً",
+          "emoji": "↔️",
+          "meme": "ميم «كلما ابتعدت قلّت المحبة» 💔",
+          "scene": "كلما ابتعدت",
+          "caption": "البعد: عكسي 💔",
+          "image": "memes/ch1/c1-q-capacitance-factors-2.webp"
+        },
+        {
+          "text": "نوع الوسط العازل بين الصفيحتين K",
+          "emoji": "🧪",
+          "meme": "ميم «Choose your fighter»: هواء، ورق، زجاج",
+          "scene": "اختار مقاتلك",
+          "caption": "نوع العازل",
+          "image": "memes/ch1/c1-q-capacitance-factors-3.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-q-connection-benefit",
+      "type": "اذكر",
+      "prompt": "ما الفائدة العملية من ربط المتسعات على التوازي وعلى التوالي؟",
+      "page": 11,
+      "chunks": [
+        {
+          "text": "التوازي: للحصول على سعة مكافئة كبيرة وشحنة كبيرة",
+          "emoji": "🏊",
+          "meme": "مسابح جنب بعض: «سعة كبيرة»",
+          "scene": "مسابح جنب بعض",
+          "caption": "توازي = سعة وشحنة كبيرة",
+          "image": "memes/ch1/c1-q-connection-benefit-1.webp"
+        },
+        {
+          "text": "بفرق جهد ثابت لا يمكن الحصول عليها بمتسعة واحدة",
+          "emoji": "🟰",
+          "meme": "ميم «Same same»",
+          "scene": "نفس الشي",
+          "caption": "والجهد ثابت",
+          "image": "memes/ch1/c1-q-connection-benefit-2.webp"
+        },
+        {
+          "text": "التوالي: لوضع فرق جهد كبير عبر طرفي المجموعة",
+          "emoji": "🚂",
+          "meme": "قطار عرباته ورا بعض: «توالي»",
+          "scene": "قطار",
+          "caption": "توالي = جهد كبير",
+          "image": "memes/ch1/c1-q-connection-benefit-3.webp"
+        },
+        {
+          "text": "قد لا تتحمله المتسعة المنفردة",
+          "emoji": "😵",
+          "meme": "ميم واحد شايل حمل ثقيل لوحده ويوكع",
+          "scene": "حمل ثقيل",
+          "caption": "وحده ما يتحمله",
+          "image": "memes/ch1/c1-q-connection-benefit-4.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-app-camera",
+      "type": "تطبيقات",
+      "prompt": "ما الفائدة العملية للمتسعة الموضوعة في منظومة المصباح الومضي في آلة التصوير؟",
+      "page": 17,
+      "chunks": [
+        {
+          "text": "تجهز المصباح بطاقة تكفي لتوهجه",
+          "emoji": "📸",
+          "meme": "فلاش كاميرا بوجه واحد مصدوم",
+          "scene": "فلاش",
+          "caption": "طاقة للمصباح",
+          "image": "memes/ch1/c1-app-camera-1.webp"
+        },
+        {
+          "text": "بصورة مفاجئة بضوء ساطع",
+          "emoji": "😎",
+          "meme": "ميم «My eyes!» واحد يغطي عيونه",
+          "scene": "عيوني!",
+          "caption": "ضوء ساطع فجأة",
+          "image": "memes/ch1/c1-app-camera-2.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-app-mic",
+      "type": "تطبيقات",
+      "prompt": "ما الفائدة العملية للمتسعة الموضوعة في اللاقطة الصوتية؟",
+      "page": 17,
+      "chunks": [
+        {
+          "text": "تحويل الذبذبات الميكانيكية الى ذبذبات كهربائية",
+          "emoji": "🎤",
+          "meme": "ميم «Transformation» ترانسفورمرز: صوت ← كهرباء",
+          "scene": "ترانسفورمرز",
+          "caption": "ميكانيكي ← كهربائي",
+          "image": "memes/ch1/c1-app-mic-1.webp"
+        },
+        {
+          "text": "وبالتردد نفسه",
+          "emoji": "🎶",
+          "meme": "توأم يغنون نفس النغمة",
+          "scene": "توأم يغني",
+          "caption": "نفس التردد 🎶",
+          "image": "memes/ch1/c1-app-mic-2.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-app-heart",
+      "type": "تطبيقات",
+      "prompt": "ما الفائدة العملية للمتسعة الموضوعة في جهاز تحفيز وتنظيم حركة عضلات القلب؟",
+      "page": 17,
+      "chunks": [
+        {
+          "text": "تفرغ طاقتها الكبيرة المختزنة فيها في جسم المريض",
+          "emoji": "🏥",
+          "meme": "مشهد مسلسل طبي: «Clear!» ⚡",
+          "scene": "مسلسل طبي",
+          "caption": "Clear! تفرغ بالمريض",
+          "image": "memes/ch1/c1-app-heart-1.webp"
+        },
+        {
+          "text": "بفترة زمنية قصيرة جداً بطريقة الصدمة الكهربائية",
+          "emoji": "⏱️⚡",
+          "meme": "ميم «That was fast» بلمح البصر",
+          "scene": "بلمح البصر",
+          "caption": "صدمة سريعة ⚡",
+          "image": "memes/ch1/c1-app-heart-2.webp"
+        },
+        {
+          "text": "فتحفز قلبه وتعيد انتظام عمله",
+          "emoji": "❤️‍🩹",
+          "meme": "قلب رسم تخطيط يرجع منتظم 💓",
+          "scene": "تخطيط قلب",
+          "caption": "رجع منتظم 💓",
+          "image": "memes/ch1/c1-app-heart-3.webp"
+        }
+      ]
+    },
+    {
+      "id": "c1-app-keyboard",
+      "type": "تطبيقات",
+      "prompt": "ما الفائدة العملية للمتسعة الموضوعة في لوحة مفاتيح الحاسوب؟",
+      "page": 17,
+      "chunks": [
+        {
+          "text": "عند الضغط على المفتاح يقل البعد بين صفيحتي المتسعة",
+          "emoji": "⌨️",
+          "meme": "ميم «Press the button» بإصبع",
+          "scene": "دوسة زر",
+          "caption": "تدوس ← البعد يقل",
+          "image": "memes/ch1/c1-app-keyboard-1.webp"
+        },
+        {
+          "text": "فتزداد سعتها",
+          "emoji": "📈",
+          "meme": "Stonks ⬆️",
+          "scene": "ستونكس",
+          "caption": "السعة تزيد",
+          "image": "memes/ch1/c1-app-keyboard-2.webp"
+        },
+        {
+          "text": "وهذا يجعل الدوائر الإلكترونية الخارجية تتعرف على المفتاح الذي تم الضغط عليه",
+          "emoji": "🕵️",
+          "meme": "ميم المحقق: «عرفتك! انت حرف الألف»",
+          "scene": "محقق",
+          "caption": "عرفتك! انت حرف الألف",
+          "image": "memes/ch1/c1-app-keyboard-3.webp"
+        }
+      ]
+    }
+  ]
+}

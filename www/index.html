@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2457d6">
+  <title>سمعلي</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <main id="home" class="screen">
+    <header class="home-head">
+      <div class="brand">
+        <h1>سمعلي</h1>
+        <button class="icon-btn" id="open-settings" type="button" aria-label="الإعدادات">⚙️</button>
+      </div>
+      <p class="sub" id="chapter-title"></p>
+      <div class="progress-summary">
+        <div class="bar"><span id="overall-bar"></span></div>
+        <span id="overall-text"></span>
+      </div>
+    </header>
+    <div class="chips" id="filters" role="group" aria-label="نوع السؤال"></div>
+    <ol class="questions" id="questions"></ol>
+  </main>
+
+  <main id="recite" class="screen" hidden>
+    <header class="recite-head">
+      <button class="icon-btn" id="back" type="button" aria-label="رجوع">→</button>
+      <span class="tag" id="r-type"></span>
+      <span class="counter" id="r-counter"></span>
+    </header>
+    <h2 class="prompt" id="r-prompt"></h2>
+    <div class="answer" id="r-answer" aria-live="polite"></div>
+    <div class="hint" id="hint" hidden>
+      <img id="hint-img" alt="">
+      <p class="hint-words" id="hint-words" hidden></p>
+    </div>
+    <p class="status" id="r-status"></p>
+    <p class="heard" id="r-heard"></p>
+    <div class="controls">
+      <button class="ghost" id="stuck" type="button">وكفت 🤔</button>
+      <button class="mic" id="mic" type="button" aria-label="ابدي التسميع">🎙️</button>
+      <button class="ghost" id="done" type="button">خلصت ✋</button>
+    </div>
+  </main>
+
+  <main id="result" class="screen" hidden>
+    <div class="score" id="s-score"></div>
+    <p class="verdict" id="s-verdict"></p>
+    <div class="stats" id="s-stats"></div>
+    <h2 class="prompt small" id="s-prompt"></h2>
+    <div class="answer review" id="s-answer"></div>
+    <div class="result-actions">
+      <button class="primary" id="again" type="button">عيد</button>
+      <button class="ghost" id="next" type="button">السؤال الجاي</button>
+      <button class="ghost" id="to-home" type="button">القائمة</button>
+    </div>
+  </main>
+
+  <dialog id="settings">
+    <form method="dialog" class="settings-form">
+      <h2>الإعدادات</h2>
+      <label for="set-lang">لهجة التعرف على الصوت</label>
+      <select id="set-lang">
+        <option value="ar-IQ">عراقي</option>
+        <option value="ar-SA">فصحى (السعودية)</option>
+        <option value="ar-EG">مصري</option>
+      </select>
+      <label for="set-stall">التلميح يطلع بعد سكوت</label>
+      <select id="set-stall">
+        <option value="3000">3 ثواني</option>
+        <option value="5000">5 ثواني</option>
+        <option value="8000">8 ثواني</option>
+      </select>
+      <label class="check"><input type="checkbox" id="set-heard"> اعرض الكلام اللي سمعه التطبيق</label>
+      <button class="primary" value="ok">تمام</button>
+    </form>
+  </dialog>
+
+  <script src="vendor/capacitor.js"></script>
+  <script src="match.js"></script>
+  <script src="speech.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

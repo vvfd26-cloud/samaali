@@ -1,0 +1,5 @@
+{
+  "chapters": [
+    { "id": "ch1", "title": "المتسعات", "file": "data/ch1-capacitors.json" }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "appId": "com.samaali.app",
+  "appName": "سمعلي",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#f4f6fb"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "samaali",
+  "version": "0.1.0",
+  "private": true,
+  "description": "سمعلي: تطبيق تسميع حفظيات السادس العلمي بالصوت، مع تلميحات ميمز",
+  "scripts": {
+    "test": "node test/match.test.js",
+    "sync": "cap sync android",
+    "serve": "npx --yes http-server www -p 8080 -c-1"
+  },
+  "dependencies": {
+    "@capacitor/android": "7.6.9",
+    "@capacitor/app": "7.1.2",
+    "@capacitor/core": "7.6.9",
+    "@capacitor-community/speech-recognition": "7.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "7.6.9"
+  }
+}

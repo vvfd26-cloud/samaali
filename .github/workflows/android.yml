@@ -1,0 +1,58 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - run: npm ci
+      - run: npm test
+      - run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk samaali.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: samaali-apk
+          path: samaali.apk
+
+      # Keeps one download link that always points at the newest build:
+      # https://github.com/<owner>/<repo>/releases/download/latest/samaali.apk
+      - name: Publish to the "latest" release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest samaali.apk \
+            --title "سمعلي - آخر نسخة (بناء ${{ github.run_number }})" \
+            --notes "نزّل samaali.apk على موبايلك الأندرويد وثبّته. إذا طلب منك، اسمح بتثبيت التطبيقات من مصادر غير معروفة." \
+            --target "$GITHUB_SHA"
