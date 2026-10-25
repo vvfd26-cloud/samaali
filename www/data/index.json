@@ -6,6 +6,8 @@
     { "id": "ch4", "title": "الموجات الكهرومغناطيسية", "file": "data/ch4-em-waves.json" },
     { "id": "ch5", "title": "البصريات الفيزيائية", "file": "data/ch5-optics.json" },
     { "id": "ch6", "title": "الفيزياء الحديثة", "file": "data/ch6-modern.json" },
-    { "id": "ch7", "title": "إلكترونيات الحالة الصلبة", "file": "data/ch7-electronics.json" }
+    { "id": "ch7", "title": "إلكترونيات الحالة الصلبة", "file": "data/ch7-electronics.json" },
+    { "id": "ch8", "title": "الأطياف الذرية والليزر", "file": "data/ch8-spectra-laser.json" },
+    { "id": "ch9", "title": "الفيزياء النووية", "file": "data/ch9-nuclear.json" }
   ]
 }
