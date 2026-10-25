@@ -61,6 +61,16 @@ const server = http.createServer((req, res) => {
   await page.evaluate(() => Samaali.say('لأن الشغل المنجز لا يعتمد على اتجاه التيار'));
   await page.waitForSelector('#result:not([hidden])');
   console.log('chapter 3 score:', await page.textContent('#s-score'));
+
+  await page.click('#to-home');
+  await page.click('#chapters button:nth-child(4)');
+  await page.waitForFunction(() => (document.querySelector('.q-row .q-text') || {}).textContent === 'عرّف الموجات الميكانيكية');
+  console.log('chapter 4 questions:', await page.$$eval('.q-row', r => r.length));
+  await page.click('text=ما المقصود بالرادار؟');
+  await page.evaluate(() => Samaali.say('تعني الكشف وتحديد البعد'));
+  await page.evaluate(() => Samaali.say('بواسطة الموجات الراديويه'));
+  await page.waitForSelector('#result:not([hidden])');
+  console.log('chapter 4 score:', await page.textContent('#s-score'));
   console.log('errors:', errors);
   await browser.close();
   server.close();

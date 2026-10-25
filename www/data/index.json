@@ -2,6 +2,7 @@
   "chapters": [
     { "id": "ch1", "title": "المتسعات", "file": "data/ch1-capacitors.json" },
     { "id": "ch2", "title": "الحث الكهرومغناطيسي", "file": "data/ch2-induction.json" },
-    { "id": "ch3", "title": "التيار المتناوب", "file": "data/ch3-ac.json" }
+    { "id": "ch3", "title": "التيار المتناوب", "file": "data/ch3-ac.json" },
+    { "id": "ch4", "title": "الموجات الكهرومغناطيسية", "file": "data/ch4-em-waves.json" }
   ]
 }
