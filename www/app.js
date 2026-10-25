@@ -39,6 +39,9 @@
       b.onclick = () => { if (c.id !== chapterId) loadChapter(c.id); };
       chapters.appendChild(b);
     });
+    // Keep the selected chapter visible when the chip row scrolls on narrow screens.
+    const current = chapters.querySelector('[aria-pressed="true"]');
+    if (current && current.scrollIntoView) current.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     const done = chapter.items.filter(i => (bestOf(i.id) || 0) >= 80).length;
     $('overall-bar').style.width = (done / chapter.items.length * 100) + '%';
     $('overall-text').textContent = `حافظ ${done} من ${chapter.items.length}`;

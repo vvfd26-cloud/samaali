@@ -8,6 +8,7 @@ const css = fs.readFileSync(path.join(fontsDir, 'fonts.css'), 'utf8')
 const palette = {
   'تعريف': ['#2457d6', '#6ea0ff'], 'تعليل': ['#d2541c', '#ffa25e'],
   'تطبيقات': ['#13895f', '#5fd6a4'], 'اذكر': ['#7a3fd1', '#b892ff'], 'عوامل': ['#7a3fd1', '#b892ff'],
+  'نشاط': ['#0f7c8c', '#5cc8d6'],
 };
 function split(meme) {
   const q = meme.match(/«(.*?)»/);
@@ -42,9 +43,9 @@ const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&
           font-size:${caption.length > 40 ? 46 : caption.length > 24 ? 56 : 68}px;
           -webkit-text-stroke:7px #111;paint-order:stroke fill;text-wrap:balance;max-width:100%}
       </style></head><body><div class="card">
-        <div class="top"><span class="pill">💡 تلميح</span><span class="scene"><bdi>${esc(scene)}</bdi></span></div>
+        <div class="top"><span class="pill">💡 تلميح</span><span class="scene"><bdi dir="rtl">${esc(scene)}</bdi></span></div>
         <div class="emo">${esc(ch.emoji)}</div>
-        <div class="cap" dir="rtl"><bdi>${esc(caption)}</bdi></div>
+        <div class="cap" dir="rtl"><bdi dir="rtl">${esc(caption)}</bdi></div>
       </div></body></html>`;
       await page.setContent(html, { waitUntil: 'load' });
       await page.evaluate(() => document.fonts.ready);

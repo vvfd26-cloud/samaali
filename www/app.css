@@ -8,6 +8,7 @@
   --orange: #e2601c;
   --green: #13895f;
   --purple: #7a3fd1;
+  --teal: #0f7c8c;
   --red: #c8333a;
   --mask: #d5dbe7;
   --display: 'Lalezar', 'IBM Plex Sans Arabic', system-ui, sans-serif;
@@ -16,7 +17,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0e131c; --surface: #171e2b; --ink: #e9eef6; --muted: #9aa6b8; --line: #283246;
-    --blue: #6d9bff; --orange: #ff9a5c; --green: #4fd29e; --purple: #b892ff; --red: #ff7a80; --mask: #2c3648;
+    --blue: #6d9bff; --orange: #ff9a5c; --green: #4fd29e; --purple: #b892ff; --teal: #5cc8d6; --red: #ff7a80; --mask: #2c3648;
     color-scheme: dark;
   }
 }
@@ -63,6 +64,7 @@ h1 { font-family: var(--display); font-weight: 400; font-size: 3rem; line-height
 .tag[data-type="تعليل"] { background: var(--orange); }
 .tag[data-type="تطبيقات"] { background: var(--green); }
 .tag[data-type="اذكر"], .tag[data-type="عوامل"] { background: var(--purple); }
+.tag[data-type="نشاط"] { background: var(--teal); }
 .best { font-size: .85rem; font-weight: 700; min-width: 3.2rem; text-align: center; border-radius: 10px; padding: 4px 6px; background: var(--mask); color: var(--muted); }
 .best.good { background: var(--green); color: #fff; }
 .best.mid { background: var(--orange); color: #fff; }

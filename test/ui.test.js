@@ -45,6 +45,22 @@ const server = http.createServer((req, res) => {
   await page.evaluate(() => Samaali.say('بسبب عدم تولد تيارات دوامه تخترق اليد'));
   await page.waitForSelector('#result:not([hidden])');
   console.log('chapter 2 score:', await page.textContent('#s-score'));
+
+  await page.click('#to-home');
+  await page.click('#chapters button:nth-child(3)');
+  await page.waitForFunction(() => document.querySelectorAll('.q-row').length === 69);
+  console.log('chapter 3 questions:', await page.$$eval('.q-row', r => r.length));
+  await page.click('#filters button:has-text("نشاط")');
+  console.log('chapter 3 activities:', await page.$$eval('.q-row', r => r.length));
+  await page.screenshot({ path: process.argv[2] + '/home-ch3.png' });
+  await page.click('#filters button:has-text("الكل")');
+  await page.click('text=لكن ينجز شغلاً');
+  await page.click('#stuck');
+  await page.waitForFunction(() => { const i = document.getElementById('hint-img'); return i.complete && i.naturalWidth > 0; });
+  console.log('chapter 3 hint image:', await page.$eval('#hint-img', i => i.getAttribute('src')));
+  await page.evaluate(() => Samaali.say('لأن الشغل المنجز لا يعتمد على اتجاه التيار'));
+  await page.waitForSelector('#result:not([hidden])');
+  console.log('chapter 3 score:', await page.textContent('#s-score'));
   console.log('errors:', errors);
   await browser.close();
   server.close();
