@@ -4,6 +4,7 @@
     { "id": "ch2", "title": "الحث الكهرومغناطيسي", "file": "data/ch2-induction.json" },
     { "id": "ch3", "title": "التيار المتناوب", "file": "data/ch3-ac.json" },
     { "id": "ch4", "title": "الموجات الكهرومغناطيسية", "file": "data/ch4-em-waves.json" },
-    { "id": "ch5", "title": "البصريات الفيزيائية", "file": "data/ch5-optics.json" }
+    { "id": "ch5", "title": "البصريات الفيزيائية", "file": "data/ch5-optics.json" },
+    { "id": "ch6", "title": "الفيزياء الحديثة", "file": "data/ch6-modern.json" }
   ]
 }

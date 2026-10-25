@@ -85,6 +85,15 @@ const server = http.createServer((req, res) => {
   await page.evaluate(() => Samaali.say('وان شدة الاستطارة تتناسب عكسيا مع الاس الرابع للطول الموجي'));
   await page.waitForSelector('#result:not([hidden])');
   console.log('chapter 5 score:', await page.textContent('#s-score'));
+
+  await page.click('#to-home');
+  await page.click('#chapters button:nth-child(6)');
+  await page.waitForFunction(() => (document.querySelector('.q-row .q-text') || {}).textContent.startsWith('ما النظرية التي فسرت'));
+  console.log('chapter 6 questions:', await page.$$eval('.q-row', r => r.length));
+  await page.click('text=على ماذا يعتمد جهد الإيقاف (جهد القطع)؟');
+  await page.evaluate(() => Samaali.say('تردد الضوء الساقط ونوع مادة سطح المعدن الباعث'));
+  await page.waitForSelector('#result:not([hidden])');
+  console.log('chapter 6 score:', await page.textContent('#s-score'));
   console.log('errors:', errors);
   await browser.close();
   server.close();
