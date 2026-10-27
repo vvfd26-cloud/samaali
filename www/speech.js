@@ -5,6 +5,8 @@
 // always receives the full text heard in the current segment so far.
 (function (root) {
   const RESTART_GAP_MS = 400;
+  // Safari on the iPhone has no Iraqi Arabic; it falls back along this chain.
+  const LANG_FALLBACK = { 'ar-IQ': 'ar-SA', 'ar-SA': 'ar' };
 
   function nativePlugin() {
     const cap = root.Capacitor;
@@ -25,12 +27,14 @@
       this.WebRec = WebRec;
     }
 
-    async start() {
+    // `fromTap`: started by a tap, so a refusal means the mic is really denied
+    // (Safari refuses a start without one).
+    async start(fromTap = false) {
       if (this.active) return;
       this.active = true;
       try {
         if (this.native) await this.startNative();
-        else if (this.WebRec) this.startWeb();
+        else if (this.WebRec) this.startWeb(fromTap);
         else this.onState('unsupported');
       } catch (err) {
         this.active = false;
@@ -82,7 +86,7 @@
       }, 700);
     }
 
-    startWeb() {
+    startWeb(fromTap) {
       const rec = new this.WebRec();
       rec.lang = this.lang;
       rec.continuous = true;
@@ -93,14 +97,25 @@
         this.onText(text.trim(), this.segment);
       };
       rec.onerror = e => {
-        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        if (e.error === 'language-not-supported' && LANG_FALLBACK[rec.lang]) {
+          this.lang = rec.lang = LANG_FALLBACK[rec.lang]; // onend restarts in the new language
+        } else if (e.error === 'service-not-allowed') {
           this.active = false;
-          this.onState('denied');
+          this.onState('service-off'); // iPhone: dictation is switched off
+        } else if (e.error === 'not-allowed') {
+          this.active = false;
+          this.onState(fromTap ? 'denied' : 'needs-tap');
         }
       };
       rec.onend = () => {
         if (!this.active) return;
-        setTimeout(() => { if (this.active) { this.segment++; try { rec.start(); } catch (_) {} } }, RESTART_GAP_MS);
+        setTimeout(() => {
+          if (!this.active) return;
+          this.segment++;
+          try { rec.start(); } catch (err) {
+            if (err && err.name !== 'InvalidStateError') { this.active = false; this.onState('needs-tap'); }
+          }
+        }, RESTART_GAP_MS);
       };
       this.rec = rec;
       this.segment++;

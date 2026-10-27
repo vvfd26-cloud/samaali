@@ -100,6 +100,31 @@ function fakeRecognizer() {
   await page.waitForFunction(() => window.Samaali && Samaali.state());
   assert.strictEqual((await state()).id, before);
 
+  // Safari on the iPhone: no start without a tap, and no Iraqi Arabic.
+  await page.close();
+  const safari = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await safari.addInitScript(() => {
+    // Counts real taps itself: Chromium's own user-activation flag is sometimes already set on a new page.
+    document.addEventListener('pointerdown', () => { window.__tapped = true; }, true);
+    window.SpeechRecognition = window.webkitSpeechRecognition = class {
+      start() {
+        const fail = error => setTimeout(() => { this.onerror({ error }); this.onend(); });
+        if (!window.__tapped) return fail('not-allowed');
+        if (this.lang === 'ar-IQ') return fail('language-not-supported');
+        window.__rec = this;
+      }
+      stop() {}
+    };
+  });
+  safari.on('pageerror', e => errors.push(e.message));
+  await safari.goto('http://localhost:8765/');
+  await safari.waitForFunction(() => document.getElementById('notice').textContent.includes('دوس على الشاشة'));
+  assert.ok(await safari.isVisible('#notice'));
+  await safari.click('#stage');
+  await safari.waitForFunction(() => window.__rec && window.__rec.lang === 'ar-SA');
+  assert.ok(!(await safari.isVisible('#notice')), 'notice clears once listening');
+  assert.ok((await safari.evaluate(() => Samaali.state().listening)));
+
   console.log('errors:', errors);
   assert.deepStrictEqual(errors, []);
   console.log('ui tests passed');

@@ -29,6 +29,7 @@ body {
 /* The whole app is one empty screen; only hints and cheers appear on it. */
 #stage {
   position: fixed; inset: 0; display: grid; place-items: center;
+  cursor: pointer; -webkit-touch-callout: none; /* iPhone Safari only sends taps to clickable-looking elements */
   padding: calc(16px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom));
 }
 

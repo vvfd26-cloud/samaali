@@ -180,7 +180,7 @@
     $('notice').hidden = !text;
   }
 
-  function listen() {
+  function listen(fromTap = false) {
     if (speech) return;
     speech = new Speech({
       lang: 'ar-IQ',
@@ -199,12 +199,14 @@
         speech = null;
         $('dot').classList.remove('on');
         hideHint();
+        if (state === 'needs-tap') setNotice('دوس على الشاشة حتى أبدي أسمعك 🎙️');
+        if (state === 'service-off') setNotice('فعّل الإملاء بالآيفون: الإعدادات ← عام ← لوحة المفاتيح ← تفعيل الإملاء، وبعدين دوس على الشاشة 🎙️');
         if (state === 'denied') setNotice('اسمح للتطبيق يستخدم المايك حتى يسمعك 🎙️ وبعدين دوس على الشاشة');
         if (state === 'unsupported') setNotice('موبايلك ما بيه خدمة التعرف على الصوت 😕 نزّل تطبيق Google وجرب مرة ثانية');
         if (state === 'error') setNotice('المايك ما اشتغل 😕 دوس على الشاشة وجرب مرة ثانية');
       },
     });
-    speech.start();
+    speech.start(fromTap);
   }
 
   function pause() {
@@ -229,7 +231,7 @@
   // Tapping starts the mic if it isn't on, otherwise asks for a stronger hint.
   $('stage').addEventListener('click', () => {
     if (!st) return;
-    if (!listening) { listen(); return; }
+    if (!listening) { listen(true); return; }
     showHint(Math.min(3, st.hint + 1));
   });
 
