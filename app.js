@@ -1,0 +1,406 @@
+// سمعلي: one empty screen with just the question. The student recites from
+// memory, the app works out which item they are on and follows along, and only
+// when they go quiet does it step in: first a word of encouragement with a small
+// clue, then a funny meme hint.
+(function () {
+  const $ = id => document.getElementById(id);
+  // Silence before the encouragement, then before the meme card, then before each stronger hint.
+  // Silence means nothing heard at all: talking that doesn't fit the answer still holds the hints back.
+  const timing = { stall: 5000, nudge: 2500, stage: 6000 };
+  const LOCATE_AFTER = 3; // heard words that don't fit the current item before looking at the others
+  const CHEER_MS = 1400;
+  const SWIPE = 50; // px a finger must travel to count as a swipe rather than a tap
+  const KNOWN = 80;  // best score at which an item counts as memorised
+  const ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر'];
+
+  const LINES = {
+    // Before any hint: they haven't started the answer yet, or stopped partway.
+    encourage: ['خذ نفس… انت تعرفها 💪', 'لا تخاف، كلش قريب منك 😌', 'فكّر شوية، دماغك يكدر 🧠',
+      'انت حافظها، بس تذكّر بدايتها ✨', 'يلا بطل، أكيد تتذكر 🤏', 'ولا يهمك، ركّز ثانية وحدة 🙏'],
+    keepGoing: ['زين ماشي! كمّل، باقيلك شوية 💪', 'لا توكف هسه، انت بالطريق الصح 🏃', 'عفية عليك، شنو بعدها؟ 🤔',
+      'قربت تخلص، لا تستسلم ✨', 'ماشي صح، بس تذكّر الجاية 🧠'],
+    start: ['ها؟ ساكت ليش؟ هاك تلميح 👇', 'نسيت شلون تبدي؟ شوف الصورة 😂', 'يلا بطل، الصورة تذكرك 😎', 'الأستاذ ينتظرك 👀'],
+    stall: ['ها؟ وكفت؟ 😅', 'الجواب على طرف لسانك 👅', 'ركّز يا بطل، شوف الصورة 🧠', 'لا تخلي الأستاذ يزعل 😂',
+      'يمعود تذكر، هاي الصورة تذكرك 👀', 'وين رحت؟ ارجع ويانا 🛸', 'دماغك علّق؟ هاك تلميح 🔌'],
+    words: ['هاك أول كلمتين، لا تكول ما ساعدتك 🙈', 'خوش، أساعدك شوية بعد 🤏', 'ها هاي بداية الجملة 👇'],
+    full: ['خلاص هاك المقطع كله، اقره وعيده 📖', 'ماكو مشكلة، اقره وكمّل 💪'],
+    cheer: ['عاش! 🔥', 'وحش 💪', 'صح لسانك 👏', 'ولك انت عبقري 🤯', 'الأستاذ فخور بيك 🥹', 'نار 🔥🔥', 'حفظ ميه بالميه 💯'],
+  };
+  const pick = list => list[Math.floor(Math.random() * list.length)];
+  const digits = n => String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+
+  const store = {
+    get(key, fallback) {
+      try { const v = localStorage.getItem('samaali:' + key); return v === null ? fallback : JSON.parse(v); }
+      catch (_) { return fallback; }
+    },
+    set(key, value) { try { localStorage.setItem('samaali:' + key, JSON.stringify(value)); } catch (_) {} },
+  };
+
+  let items = [];    // every item of every chapter, in booklet order
+  let chapters = []; // { title, start, count } for each chapter
+  let entries = [];  // the matcher's view of each item
+  let st = null;    // where the student is in the current item
+  let listening = false;
+  let cheering = false;
+  let picking = false; // the chapter sheet is open
+  let speech = null;
+
+  // ---------- following the student ----------
+  // Starts following items[index]. `start` is where the current speech segment
+  // lines up in the item and `pointer` how far it got; segment bookkeeping
+  // carries over so a jump mid-sentence keeps lining up.
+  function begin(index, start = 0, pointer = start) {
+    const carry = st ? { segment: st.segment, tokOffset: st.tokOffset, heard: st.heard } : { segment: -1, tokOffset: 0, heard: 0 };
+    st = Object.assign({
+      index, words: entries[index].words, segStart: start, pointer: Math.max(start, pointer), states: {},
+      hint: 0, hintChunk: -1, hintAt: 0, hintsUsed: 0, nudgeAt: 0, lastProgress: Date.now(), lastHeard: 0, heardText: '',
+    }, carry);
+    if (st.pointer === start) {
+      while (st.pointer < st.words.length && st.words[st.pointer].optional) st.pointer++;
+      st.segStart = st.pointer;
+    }
+    store.set('pos', items[index].id);
+    hideHint();
+    showWhere();
+    if (!cheering) showQuestion();
+    items[index].chunks.forEach(c => { new Image().src = c.image; });
+  }
+
+  function onHeard(text, segment) {
+    if (!st || !listening || picking) return;
+    if (segment !== st.segment) { st.segment = segment; st.segStart = st.pointer; st.tokOffset = 0; }
+    if (text !== st.heardText) { st.heardText = text; speaking(); }
+    const toks = Match.tokenize(text);
+    st.heard = toks.length;
+    const fresh = toks.slice(st.tokOffset).join(' ');
+    if (!fresh) return;
+    const r = follow(fresh);
+    if (st.pointer >= st.words.length) { complete(toks.length); return; }
+    if (r.unmatchedRun >= LOCATE_AFTER) relocate(fresh, toks.length);
+  }
+
+  // They are talking, whether or not it fits: no encouragement or new hint until they go quiet.
+  function speaking() {
+    if (!st) return;
+    st.lastHeard = Date.now();
+    hideNudge();
+  }
+
+  // Lines the segment's words up with the current item from where the segment began.
+  function follow(fresh) {
+    const r = Match.align(st.words, st.segStart, fresh);
+    for (const k in st.states) if (k >= st.segStart) delete st.states[k];
+    Object.assign(st.states, r.states);
+    const pointer = Math.max(st.segStart, r.pointer);
+    const moved = pointer > st.pointer;
+    st.pointer = pointer; // the recognizer may also take words back
+    if (moved) progressed();
+    return r;
+  }
+
+  // The words don't fit where we are: maybe they jumped to another item, said its question, or restarted.
+  function relocate(fresh, tokCount) {
+    const found = Match.locate(entries, fresh, st.index);
+    if (!found || (found.index === st.index && found.start === st.segStart)) return;
+    begin(found.index, found.start, found.pointer);
+    follow(fresh);
+    st.lastProgress = Date.now();
+    if (st.pointer >= st.words.length) complete(tokCount);
+  }
+
+  function progressed() {
+    st.lastProgress = Date.now();
+    hideNudge();
+    if (!st.hint) return;
+    if (currentChunk() !== st.hintChunk) hideHint();
+    else if (st.hint >= 2) setHintWords(st.hint);
+  }
+
+  function complete(tokCount) {
+    const required = st.words.filter(w => !w.optional).length;
+    const matched = st.words.filter((w, k) => !w.optional && st.states[k] === 'matched').length;
+    const id = items[st.index].id;
+    const score = Math.round(matched / required * 100);
+    if (score > store.get('best:' + id, -1)) store.set('best:' + id, score);
+    cheer();
+    st.tokOffset = tokCount; // words already heard in this segment belong to the finished item
+    begin((st.index + 1) % items.length);
+  }
+
+  // Moves to another item by hand; words already heard in this segment stay with the old one.
+  function go(index, anim = 'pop') {
+    st.tokOffset = st.heard;
+    begin((index + items.length) % items.length);
+    replay($('question'), anim);
+  }
+
+  function currentChunk() {
+    const w = st.words[Math.min(st.pointer, st.words.length - 1)];
+    return w ? w.chunk : 0;
+  }
+
+  // ---------- question and hints ----------
+  // The item's question stays on screen; the hint comes only after silence.
+  function showQuestion() {
+    const el = $('question');
+    const prompt = items[st.index].prompt;
+    if (!el.hidden && el.textContent === prompt) return;
+    el.textContent = prompt;
+    el.hidden = false;
+    replay(el);
+  }
+
+  // The small label at the top: which chapter, and how far into it.
+  function showWhere() {
+    const ch = chapters[items[st.index].chapter];
+    $('where').textContent = ch.title + ' — ' + digits(st.index - ch.start + 1) + ' من ' + digits(ch.count) + ' ▾';
+    $('where').hidden = false;
+  }
+
+  // Before the card: cheer them on, with the first letters of the word they are stuck on.
+  function showNudge() {
+    const started = Object.keys(st.states).some(k => st.states[k] === 'matched');
+    const c = clue();
+    st.nudgeAt = Date.now();
+    $('nudge-line').textContent = pick(started ? LINES.keepGoing : LINES.encourage);
+    $('nudge-clue').textContent = c && (started ? 'الكلمة الجاية تبدي بـ ' : 'أول كلمة تبدي بـ ') + '«' + c + '»';
+    $('nudge-clue').hidden = !c;
+    $('nudge').hidden = false;
+    replay($('nudge'));
+  }
+
+  function hideNudge() {
+    if (st) st.nudgeAt = 0;
+    $('nudge').hidden = true;
+  }
+
+  // The next word's opening letter, with its article or joined prefix: جـ, الشـ, والتـ.
+  // A letter that is often only a prefix or an alef says little alone, so it gets the next one too: ولـ, إلـ.
+  function clue() {
+    const w = st.words.slice(st.pointer).find(w => !w.optional);
+    const m = w && w.raw.replace(/[\u064B-\u0652\u0670\u0640]/g, '').match(/^((?:[وفب]?ال)|لل)?([\u0621-\u064A])([\u0621-\u064A])?/);
+    if (!m) return '';
+    const lead = (m[1] || '') + m[2] + ('وفبلاأإآ'.includes(m[2]) && m[3] ? m[3] : '');
+    return lead + ('اأإآدذرزوؤةءى'.includes(lead.slice(-1)) ? '' : 'ـ');
+  }
+
+  // Stage 1: the meme card. Stage 2: also the next two words. Stage 3: the rest of the chunk to read.
+  function showHint(stage) {
+    const item = items[st.index];
+    const ci = currentChunk();
+    const chunk = item.chunks[ci];
+    const isNew = !st.hint || ci !== st.hintChunk;
+    const started = Object.keys(st.states).some(k => st.states[k] === 'matched');
+    st.hint = stage;
+    st.hintChunk = ci;
+    st.hintAt = Date.now();
+    st.hintsUsed++;
+    hideNudge();
+    $('hint-line').textContent = pick(stage === 1 ? (started ? LINES.stall : LINES.start) : stage === 2 ? LINES.words : LINES.full);
+    if (isNew) {
+      $('hint-img').src = chunk.image;
+      $('hint-img').alt = 'تلميح: ' + chunk.caption;
+      replay($('hint'));
+    }
+    setHintWords(stage);
+    if (stage >= 2) replay($('hint-words'));
+    $('hint').hidden = false;
+  }
+
+  function setHintWords(stage) {
+    const el = $('hint-words');
+    const rest = st.words.slice(st.pointer).filter(w => w.chunk === st.hintChunk);
+    const shown = stage >= 3 ? rest : rest.filter(w => !w.optional).slice(0, 2);
+    el.textContent = shown.length ? shown.map(w => w.raw).join(' ') + (shown.length < rest.length ? ' ...' : '') : '';
+    el.hidden = stage < 2 || !shown.length;
+  }
+
+  function hideHint() {
+    if (st) { st.hint = 0; st.hintChunk = -1; }
+    $('hint').hidden = true;
+    hideNudge();
+  }
+
+  function replay(el, anim = 'pop') {
+    el.classList.remove('pop', 'next', 'prev');
+    void el.offsetWidth;
+    el.classList.add(anim);
+  }
+
+  function cheer() {
+    const el = $('cheer');
+    el.textContent = pick(LINES.cheer);
+    el.hidden = false;
+    $('question').hidden = true;
+    cheering = true;
+    replay(el);
+    clearTimeout(cheer.timer);
+    cheer.timer = setTimeout(() => {
+      el.hidden = true;
+      cheering = false;
+      if (!st) return;
+      st.lastProgress = Date.now();
+      showQuestion();
+    }, CHEER_MS);
+  }
+
+  setInterval(() => {
+    if (!st || !listening || cheering || picking) return;
+    const now = Date.now();
+    if (now - Math.max(st.lastProgress, st.lastHeard) < timing.stall) return;
+    if (!st.hint && !st.nudgeAt) showNudge();
+    else if (!st.hint && now - st.nudgeAt > timing.nudge) showHint(1);
+    else if (st.hint && st.hint < 3 && now - st.hintAt > timing.stage) showHint(st.hint + 1);
+  }, 250);
+
+  // ---------- listening ----------
+  function setNotice(text) {
+    $('notice').textContent = text;
+    $('notice').hidden = !text;
+  }
+
+  function listen(fromTap = false) {
+    if (speech) return;
+    speech = new Speech({
+      lang: 'ar-IQ',
+      onText: onHeard,
+      onSpeech: () => { if (listening && !picking) speaking(); },
+      onState: state => {
+        if (state === 'listening') {
+          listening = true;
+          if (st) st.lastProgress = Date.now();
+          setNotice('');
+          $('dot').classList.add('on');
+          keepAwake();
+          return;
+        }
+        if (state === 'stopped') return;
+        listening = false;
+        speech = null;
+        $('dot').classList.remove('on');
+        hideHint();
+        if (state === 'needs-tap') setNotice('دوس على الشاشة حتى أبدي أسمعك 🎙️');
+        if (state === 'service-off') setNotice('فعّل الإملاء بالآيفون: الإعدادات ← عام ← لوحة المفاتيح ← تفعيل الإملاء، وبعدين دوس على الشاشة 🎙️');
+        if (state === 'denied') setNotice('اسمح للتطبيق يستخدم المايك حتى يسمعك 🎙️ وبعدين دوس على الشاشة');
+        if (state === 'unsupported') setNotice('موبايلك ما بيه خدمة التعرف على الصوت 😕 نزّل تطبيق Google وجرب مرة ثانية');
+        if (state === 'error') setNotice('المايك ما اشتغل 😕 دوس على الشاشة وجرب مرة ثانية');
+      },
+    });
+    speech.start(fromTap);
+  }
+
+  function pause() {
+    if (speech) speech.stop();
+    speech = null;
+    listening = false;
+    $('dot').classList.remove('on');
+  }
+
+  // The phone sits untouched while the student recites, so keep the screen on.
+  let wakeLock = null;
+  function keepAwake() {
+    if (wakeLock || !navigator.wakeLock) return;
+    navigator.wakeLock.request('screen').then(l => { wakeLock = l; l.addEventListener('release', () => { wakeLock = null; }); }).catch(() => {});
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) pause();
+    else if (st) listen();
+  });
+
+  // Tapping starts the mic if it isn't on, otherwise asks for a stronger hint.
+  // Swiping moves between questions: right like turning a page of the ملزمة, or up like the next reel.
+  let touch = null, swiped = false;
+  $('stage').addEventListener('pointerdown', e => { touch = { x: e.clientX, y: e.clientY }; swiped = false; });
+  $('stage').addEventListener('pointercancel', () => { touch = null; });
+  $('stage').addEventListener('pointerup', e => {
+    if (!touch || !st) return;
+    const dx = e.clientX - touch.x, dy = e.clientY - touch.y;
+    touch = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE) return;
+    swiped = true;
+    const next = Math.abs(dx) > Math.abs(dy) ? dx > 0 : dy < 0;
+    go(st.index + (next ? 1 : -1), next ? 'next' : 'prev');
+    store.set('swiped', true);
+    $('tip').hidden = true;
+    if (!listening) listen(true);
+  });
+  $('stage').addEventListener('click', () => {
+    if (!st || swiped) return;
+    if (!listening) { listen(true); return; }
+    showHint(Math.min(3, st.hint + 1));
+  });
+
+  // ---------- chapters ----------
+  $('where').addEventListener('click', e => {
+    e.stopPropagation();
+    if (st) openChapters();
+  });
+  $('sheet').addEventListener('click', e => { if (e.target === $('sheet')) closeChapters(); });
+
+  function openChapters() {
+    const list = $('sheet-list');
+    list.textContent = '';
+    chapters.forEach((ch, k) => {
+      const ids = items.slice(ch.start, ch.start + ch.count).map(it => it.id);
+      const known = ids.filter(id => store.get('best:' + id, -1) >= KNOWN).length;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chapter' + (k === items[st.index].chapter ? ' on' : '');
+      b.innerHTML = '<span class="chapter-num"></span><span class="chapter-text"><span class="chapter-title"></span>' +
+        '<span class="chapter-meta"></span><span class="chapter-bar"><i></i></span></span>';
+      b.querySelector('.chapter-num').textContent = digits(k + 1);
+      b.querySelector('.chapter-title').textContent = ch.title;
+      b.querySelector('.chapter-meta').textContent = 'الفصل ' + (ORDINALS[k] || digits(k + 1)) + '، حافظ ' + digits(known) + ' من ' + digits(ch.count);
+      b.querySelector('.chapter-bar i').style.width = (known / ch.count * 100) + '%';
+      b.addEventListener('click', () => {
+        // Start at the first question not memorised yet.
+        const first = ids.findIndex(id => store.get('best:' + id, -1) < KNOWN);
+        closeChapters();
+        go(ch.start + Math.max(0, first));
+        if (!listening) listen(true);
+      });
+      list.appendChild(b);
+    });
+    picking = true;
+    hideHint();
+    $('sheet').hidden = false;
+  }
+
+  function closeChapters() {
+    picking = false;
+    $('sheet').hidden = true;
+    if (st) st.lastProgress = Date.now();
+  }
+
+  // For testing without a microphone: Samaali.say('...') is one new speech
+  // segment; pass the same segment number again to send a longer partial.
+  window.Samaali = {
+    say(text, segment) {
+      if (!st) return;
+      listening = true;
+      onHeard(text, segment === undefined ? st.segment + 1 : segment);
+    },
+    state() {
+      return st && { id: items[st.index].id, index: st.index, pointer: st.pointer, length: st.words.length, hint: st.hint, listening };
+    },
+    timing,
+  };
+
+  fetch('data/index.json')
+    .then(r => r.json())
+    .then(index => Promise.all(index.chapters.map(c => fetch(c.file).then(r => r.json())))
+      .then(data => data.forEach((ch, k) => {
+        chapters.push({ title: index.chapters[k].title, start: items.length, count: ch.items.length });
+        ch.items.forEach(it => { it.chapter = k; items.push(it); });
+      })))
+    .then(() => {
+      entries = items.map(it => ({ words: Match.buildWords(it), prompt: Match.promptWords(it.prompt) }));
+      const saved = items.findIndex(it => it.id === store.get('pos', null));
+      begin(saved < 0 ? 0 : saved);
+      $('tip').hidden = store.get('swiped', false);
+      listen();
+    })
+    .catch(() => setNotice('ما كدرت أحمّل الأسئلة 😕'));
+})();

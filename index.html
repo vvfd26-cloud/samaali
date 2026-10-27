@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#f4f6fb">
+  <title>سمعلي</title>
+  <meta name="apple-mobile-web-app-title" content="سمعلي">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <main id="stage">
+    <button class="where" id="where" type="button" hidden></button>
+    <p class="question" id="question" aria-live="polite" hidden></p>
+    <section class="nudge" id="nudge" aria-live="polite" hidden>
+      <p class="nudge-line" id="nudge-line"></p>
+      <p class="nudge-clue" id="nudge-clue" hidden></p>
+    </section>
+    <section class="hint" id="hint" aria-live="polite" hidden>
+      <p class="hint-line" id="hint-line"></p>
+      <img id="hint-img" alt="">
+      <p class="hint-words" id="hint-words" hidden></p>
+    </section>
+    <p class="cheer" id="cheer" aria-live="polite" hidden></p>
+    <p class="notice" id="notice" hidden></p>
+    <p class="tip" id="tip" hidden>اسحب حتى تعبر السؤال 👆</p>
+    <span class="dot" id="dot" aria-hidden="true"></span>
+  </main>
+
+  <div class="sheet" id="sheet" hidden>
+    <div class="sheet-panel" role="dialog" aria-labelledby="sheet-title">
+      <p class="sheet-title" id="sheet-title">شنو تريد تسمّع؟</p>
+      <div id="sheet-list"></div>
+    </div>
+  </div>
+
+  <script src="vendor/capacitor.js"></script>
+  <script src="native-shim.js"></script>
+  <script src="match.js"></script>
+  <script src="speech.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
