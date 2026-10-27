@@ -5,6 +5,7 @@
 (function () {
   const $ = id => document.getElementById(id);
   // Silence before the encouragement, then before the meme card, then before each stronger hint.
+  // Silence means nothing heard at all: talking that doesn't fit the answer still holds the hints back.
   const timing = { stall: 5000, nudge: 2500, stage: 6000 };
   const LOCATE_AFTER = 3; // heard words that don't fit the current item before looking at the others
   const CHEER_MS = 1400;
@@ -53,7 +54,7 @@
     const carry = st ? { segment: st.segment, tokOffset: st.tokOffset, heard: st.heard } : { segment: -1, tokOffset: 0, heard: 0 };
     st = Object.assign({
       index, words: entries[index].words, segStart: start, pointer: Math.max(start, pointer), states: {},
-      hint: 0, hintChunk: -1, hintAt: 0, hintsUsed: 0, nudgeAt: 0, lastProgress: Date.now(),
+      hint: 0, hintChunk: -1, hintAt: 0, hintsUsed: 0, nudgeAt: 0, lastProgress: Date.now(), lastHeard: 0, heardText: '',
     }, carry);
     if (st.pointer === start) {
       while (st.pointer < st.words.length && st.words[st.pointer].optional) st.pointer++;
@@ -69,6 +70,7 @@
   function onHeard(text, segment) {
     if (!st || !listening || picking) return;
     if (segment !== st.segment) { st.segment = segment; st.segStart = st.pointer; st.tokOffset = 0; }
+    if (text !== st.heardText) { st.heardText = text; speaking(); }
     const toks = Match.tokenize(text);
     st.heard = toks.length;
     const fresh = toks.slice(st.tokOffset).join(' ');
@@ -76,6 +78,13 @@
     const r = follow(fresh);
     if (st.pointer >= st.words.length) { complete(toks.length); return; }
     if (r.unmatchedRun >= LOCATE_AFTER) relocate(fresh, toks.length);
+  }
+
+  // They are talking, whether or not it fits: no encouragement or new hint until they go quiet.
+  function speaking() {
+    if (!st) return;
+    st.lastHeard = Date.now();
+    hideNudge();
   }
 
   // Lines the segment's words up with the current item from where the segment began.
@@ -239,7 +248,7 @@
   setInterval(() => {
     if (!st || !listening || cheering || picking) return;
     const now = Date.now();
-    if (now - st.lastProgress < timing.stall) return;
+    if (now - Math.max(st.lastProgress, st.lastHeard) < timing.stall) return;
     if (!st.hint && !st.nudgeAt) showNudge();
     else if (!st.hint && now - st.nudgeAt > timing.nudge) showHint(1);
     else if (st.hint && st.hint < 3 && now - st.hintAt > timing.stage) showHint(st.hint + 1);
@@ -256,6 +265,7 @@
     speech = new Speech({
       lang: 'ar-IQ',
       onText: onHeard,
+      onSpeech: () => { if (listening && !picking) speaking(); },
       onState: state => {
         if (state === 'listening') {
           listening = true;

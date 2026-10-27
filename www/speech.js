@@ -15,10 +15,11 @@
   }
 
   class Speech {
-    constructor({ lang, onText, onState }) {
+    constructor({ lang, onText, onState, onSpeech }) {
       this.lang = lang;
       this.onText = onText;
       this.onState = onState;
+      this.onSpeech = onSpeech || (() => {}); // the recognizer hears a voice, before it has any words
       this.active = false;
       this.segment = 0;
       this.native = nativePlugin();
@@ -91,11 +92,8 @@
       rec.lang = this.lang;
       rec.continuous = true;
       rec.interimResults = true;
-      rec.onresult = e => {
-        let text = '';
-        for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript + ' ';
-        this.onText(text.trim(), this.segment);
-      };
+      rec.onresult = e => this.onText(Speech.joinResults(e.results), this.segment);
+      rec.onspeechstart = rec.onsoundstart = () => this.onSpeech();
       rec.onerror = e => {
         if (e.error === 'language-not-supported' && LANG_FALLBACK[rec.lang]) {
           this.lang = rec.lang = LANG_FALLBACK[rec.lang]; // onend restarts in the new language
@@ -123,6 +121,22 @@
       this.onState('listening');
     }
   }
+
+  // Joins a result list into the text heard so far. Chrome sends each phrase as
+  // its own result; Safari on the iPhone can send each one as the whole
+  // transcript so far, sometimes with an early word corrected. A result that
+  // opens the way the text so far opens replaces it instead of repeating it.
+  Speech.joinResults = results => {
+    let words = [];
+    for (let i = 0; i < results.length; i++) {
+      const next = String(results[i][0].transcript).trim().split(/\s+/).filter(Boolean);
+      const n = Math.min(3, next.length, words.length);
+      let same = 0;
+      for (let k = 0; k < n; k++) if (next[k] === words[k]) same++;
+      words = n && same >= Math.min(2, n) ? next : words.concat(next);
+    }
+    return words.join(' ');
+  };
 
   root.Speech = Speech;
 })(this);

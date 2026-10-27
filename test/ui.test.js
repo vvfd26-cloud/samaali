@@ -45,6 +45,19 @@ function fakeRecognizer() {
   assert.ok(await visible('#tip'), 'swipe tip until the first swipe');
   await shot('question');
 
+  // Talking holds the hints back, even when the words don't fit the answer.
+  for (let k = 1; k <= 8; k++) {
+    await page.evaluate(k => Samaali.say(Array(k).fill('امم').join(' '), 500), k);
+    await page.waitForTimeout(200);
+  }
+  assert.ok(!(await visible('#nudge')) && !(await visible('#hint')), 'no hints while they are talking');
+  assert.strictEqual((await state()).id, 'c1-def-capacitor');
+
+  // So does a voice the recognizer has no words for yet.
+  await page.evaluate(() => { window.__rec.onspeechstart(); });
+  await page.waitForTimeout(500);
+  assert.ok(!(await visible('#nudge')), 'a voice counts as talking');
+
   // Quiet before starting: first encouragement with the opening letter, then the meme card under the question.
   await page.waitForSelector('#nudge:not([hidden])');
   assert.ok(!(await visible('#hint')), 'encouragement comes before the card');
