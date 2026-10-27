@@ -34,7 +34,7 @@ function fakeRecognizer() {
 
   await page.goto('http://localhost:8765/');
   await page.waitForFunction(() => window.Samaali && Samaali.state() && Samaali.state().listening);
-  await page.evaluate(() => { Samaali.timing.stall = 700; Samaali.timing.stage = 900; });
+  await page.evaluate(() => { Samaali.timing.stall = 700; Samaali.timing.nudge = 600; Samaali.timing.stage = 900; });
 
   // Only the question: no hint until the student goes quiet.
   assert.strictEqual((await state()).id, 'c1-def-capacitor');
@@ -45,8 +45,12 @@ function fakeRecognizer() {
   assert.ok(await visible('#tip'), 'swipe tip until the first swipe');
   await shot('question');
 
-  // Quiet before starting: the first meme card under the question.
+  // Quiet before starting: first encouragement with the opening letter, then the meme card under the question.
+  await page.waitForSelector('#nudge:not([hidden])');
+  assert.ok(!(await visible('#hint')), 'encouragement comes before the card');
+  assert.strictEqual(await page.textContent('#nudge-clue'), 'أول كلمة تبدي بـ «جـ»');
   await page.waitForSelector('#hint:not([hidden])');
+  assert.ok(!(await visible('#nudge')), 'the card replaces the encouragement');
   await imageLoaded();
   assert.ok(await visible('#question'));
   assert.ok((await page.getAttribute('#hint-img', 'src')).endsWith('c1-def-capacitor-1.webp'));
@@ -57,7 +61,9 @@ function fakeRecognizer() {
   assert.ok(!(await visible('#hint')), 'hint clears when the chunk changes');
   assert.ok(await visible('#question'), 'the question stays');
 
-  // Quiet mid-answer: card for the next chunk, then words, then the whole chunk.
+  // Quiet mid-answer: a push to keep going with the next word's letter, then the card, words, and the whole chunk.
+  await page.waitForSelector('#nudge:not([hidden])');
+  assert.strictEqual(await page.textContent('#nudge-clue'), 'الكلمة الجاية تبدي بـ «يـ»');
   await page.waitForSelector('#hint:not([hidden])');
   assert.ok((await page.getAttribute('#hint-img', 'src')).endsWith('c1-def-capacitor-2.webp'));
   await page.waitForSelector('#hint-words:not([hidden])');

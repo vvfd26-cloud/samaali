@@ -1,9 +1,11 @@
 // سمعلي: one empty screen with just the question. The student recites from
 // memory, the app works out which item they are on and follows along, and only
-// when they go quiet does it pop a funny meme hint.
+// when they go quiet does it step in: first a word of encouragement with a small
+// clue, then a funny meme hint.
 (function () {
   const $ = id => document.getElementById(id);
-  const timing = { stall: 4000, stage: 6000 }; // silence before the first hint, then before each stronger one
+  // Silence before the encouragement, then before the meme card, then before each stronger hint.
+  const timing = { stall: 5000, nudge: 2500, stage: 6000 };
   const LOCATE_AFTER = 3; // heard words that don't fit the current item before looking at the others
   const CHEER_MS = 1400;
   const SWIPE = 50; // px a finger must travel to count as a swipe rather than a tap
@@ -11,6 +13,11 @@
   const ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر'];
 
   const LINES = {
+    // Before any hint: they haven't started the answer yet, or stopped partway.
+    encourage: ['خذ نفس… انت تعرفها 💪', 'لا تخاف، كلش قريب منك 😌', 'فكّر شوية، دماغك يكدر 🧠',
+      'انت حافظها، بس تذكّر بدايتها ✨', 'يلا بطل، أكيد تتذكر 🤏', 'ولا يهمك، ركّز ثانية وحدة 🙏'],
+    keepGoing: ['زين ماشي! كمّل، باقيلك شوية 💪', 'لا توكف هسه، انت بالطريق الصح 🏃', 'عفية عليك، شنو بعدها؟ 🤔',
+      'قربت تخلص، لا تستسلم ✨', 'ماشي صح، بس تذكّر الجاية 🧠'],
     start: ['ها؟ ساكت ليش؟ هاك تلميح 👇', 'نسيت شلون تبدي؟ شوف الصورة 😂', 'يلا بطل، الصورة تذكرك 😎', 'الأستاذ ينتظرك 👀'],
     stall: ['ها؟ وكفت؟ 😅', 'الجواب على طرف لسانك 👅', 'ركّز يا بطل، شوف الصورة 🧠', 'لا تخلي الأستاذ يزعل 😂',
       'يمعود تذكر، هاي الصورة تذكرك 👀', 'وين رحت؟ ارجع ويانا 🛸', 'دماغك علّق؟ هاك تلميح 🔌'],
@@ -46,7 +53,7 @@
     const carry = st ? { segment: st.segment, tokOffset: st.tokOffset, heard: st.heard } : { segment: -1, tokOffset: 0, heard: 0 };
     st = Object.assign({
       index, words: entries[index].words, segStart: start, pointer: Math.max(start, pointer), states: {},
-      hint: 0, hintChunk: -1, hintAt: 0, hintsUsed: 0, lastProgress: Date.now(),
+      hint: 0, hintChunk: -1, hintAt: 0, hintsUsed: 0, nudgeAt: 0, lastProgress: Date.now(),
     }, carry);
     if (st.pointer === start) {
       while (st.pointer < st.words.length && st.words[st.pointer].optional) st.pointer++;
@@ -95,6 +102,7 @@
 
   function progressed() {
     st.lastProgress = Date.now();
+    hideNudge();
     if (!st.hint) return;
     if (currentChunk() !== st.hintChunk) hideHint();
     else if (st.hint >= 2) setHintWords(st.hint);
@@ -141,6 +149,33 @@
     $('where').hidden = false;
   }
 
+  // Before the card: cheer them on, with the first letters of the word they are stuck on.
+  function showNudge() {
+    const started = Object.keys(st.states).some(k => st.states[k] === 'matched');
+    const c = clue();
+    st.nudgeAt = Date.now();
+    $('nudge-line').textContent = pick(started ? LINES.keepGoing : LINES.encourage);
+    $('nudge-clue').textContent = c && (started ? 'الكلمة الجاية تبدي بـ ' : 'أول كلمة تبدي بـ ') + '«' + c + '»';
+    $('nudge-clue').hidden = !c;
+    $('nudge').hidden = false;
+    replay($('nudge'));
+  }
+
+  function hideNudge() {
+    if (st) st.nudgeAt = 0;
+    $('nudge').hidden = true;
+  }
+
+  // The next word's opening letter, with its article or joined prefix: جـ, الشـ, والتـ.
+  // A letter that is often only a prefix or an alef says little alone, so it gets the next one too: ولـ, إلـ.
+  function clue() {
+    const w = st.words.slice(st.pointer).find(w => !w.optional);
+    const m = w && w.raw.replace(/[\u064B-\u0652\u0670\u0640]/g, '').match(/^((?:[وفب]?ال)|لل)?([\u0621-\u064A])([\u0621-\u064A])?/);
+    if (!m) return '';
+    const lead = (m[1] || '') + m[2] + ('وفبلاأإآ'.includes(m[2]) && m[3] ? m[3] : '');
+    return lead + ('اأإآدذرزوؤةءى'.includes(lead.slice(-1)) ? '' : 'ـ');
+  }
+
   // Stage 1: the meme card. Stage 2: also the next two words. Stage 3: the rest of the chunk to read.
   function showHint(stage) {
     const item = items[st.index];
@@ -152,6 +187,7 @@
     st.hintChunk = ci;
     st.hintAt = Date.now();
     st.hintsUsed++;
+    hideNudge();
     $('hint-line').textContent = pick(stage === 1 ? (started ? LINES.stall : LINES.start) : stage === 2 ? LINES.words : LINES.full);
     if (isNew) {
       $('hint-img').src = chunk.image;
@@ -174,6 +210,7 @@
   function hideHint() {
     if (st) { st.hint = 0; st.hintChunk = -1; }
     $('hint').hidden = true;
+    hideNudge();
   }
 
   function replay(el, anim = 'pop') {
@@ -203,8 +240,9 @@
     if (!st || !listening || cheering || picking) return;
     const now = Date.now();
     if (now - st.lastProgress < timing.stall) return;
-    if (!st.hint) showHint(1);
-    else if (st.hint < 3 && now - st.hintAt > timing.stage) showHint(st.hint + 1);
+    if (!st.hint && !st.nudgeAt) showNudge();
+    else if (!st.hint && now - st.nudgeAt > timing.nudge) showHint(1);
+    else if (st.hint && st.hint < 3 && now - st.hintAt > timing.stage) showHint(st.hint + 1);
   }, 250);
 
   // ---------- listening ----------
