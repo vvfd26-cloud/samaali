@@ -1,5 +1,5 @@
 // Drives the web build in Chromium with a fake speech recognizer: the screen
-// starts empty, hints pop up on silence and grow, finished items cheer and move
+// shows only the question, hints pop up on silence and grow, finished items cheer and move
 // on, and the app finds what the student is reciting from anywhere in the booklet.
 const assert = require('assert');
 const { chromium } = require('playwright');
@@ -36,26 +36,27 @@ function fakeRecognizer() {
   await page.waitForFunction(() => window.Samaali && Samaali.state() && Samaali.state().listening);
   await page.evaluate(() => { Samaali.timing.stall = 700; Samaali.timing.stage = 900; });
 
-  // An empty screen: nothing shows until the student goes quiet.
+  // Only the question: no hint until the student goes quiet.
   assert.strictEqual((await state()).id, 'c1-def-capacitor');
-  assert.ok(!(await visible('#hint')) && !(await visible('#notice')), 'screen starts empty');
-  await shot('blank');
+  assert.strictEqual(await page.textContent('#question'), 'عرّف المتسعة');
+  assert.ok(await visible('#question'));
+  assert.ok(!(await visible('#hint')) && !(await visible('#notice')), 'no hint before the silence');
+  await shot('question');
 
-  // Quiet before starting: the question and the first meme card.
+  // Quiet before starting: the first meme card under the question.
   await page.waitForSelector('#hint:not([hidden])');
   await imageLoaded();
-  assert.strictEqual(await page.textContent('#hint-q'), 'عرّف المتسعة');
-  assert.ok(await visible('#hint-q'));
+  assert.ok(await visible('#question'));
   assert.ok((await page.getAttribute('#hint-img', 'src')).endsWith('c1-def-capacitor-1.webp'));
-  await shot('hint-question');
+  await shot('hint-start');
 
   // Reciting the first chunk moves on and clears the card.
   await page.evaluate(() => Samaali.say('جهاز يتألف من زوج من الصفائح الموصلة'));
   assert.ok(!(await visible('#hint')), 'hint clears when the chunk changes');
+  assert.ok(await visible('#question'), 'the question stays');
 
-  // Quiet mid-answer: card for the next chunk without the question, then words, then the whole chunk.
+  // Quiet mid-answer: card for the next chunk, then words, then the whole chunk.
   await page.waitForSelector('#hint:not([hidden])');
-  assert.ok(!(await visible('#hint-q')));
   assert.ok((await page.getAttribute('#hint-img', 'src')).endsWith('c1-def-capacitor-2.webp'));
   await page.waitForSelector('#hint-words:not([hidden])');
   assert.strictEqual(await page.textContent('#hint-words'), 'يفصل بينهما ...');
@@ -66,15 +67,20 @@ function fakeRecognizer() {
   // Finishing the item cheers and moves to the next one.
   await page.evaluate(() => Samaali.say('يفصل بينهما عازل تستعمل لتخزين الشحنات الكهربائية والطاقة الكهربائية'));
   assert.ok(await visible('#cheer'), 'cheer after finishing');
+  assert.ok(!(await visible('#question')), 'the cheer has the screen to itself');
   await shot('cheer');
   assert.strictEqual((await state()).id, 'c1-def-capacitance');
   assert.ok(!(await visible('#hint')));
+  await page.waitForSelector('#cheer', { state: 'hidden' });
+  assert.strictEqual(await page.textContent('#question'), 'ما المقصود بالسعة؟ وبأي وحدة تقاس؟');
+  assert.ok(!(await visible('#hint')), 'next question shows without a hint');
 
   // Jumping to an answer in another chapter, mid-sentence.
   await page.evaluate(() => Samaali.say('هو جسيم له صفات الالكترون ولكن شحنته موجبة'));
   let s = await state();
   assert.strictEqual(s.id, 'c9-def-positron');
   assert.ok(s.pointer > 5, 'follows from where they were: ' + s.pointer);
+  assert.strictEqual(await page.textContent('#question'), 'ما المقصود بالبوزترون؟', 'the question follows the jump');
 
   // Saying a question, then its answer growing through partial results of one segment.
   await page.evaluate(() => Samaali.say('ما المقصود بالليزر', 900));

@@ -1,6 +1,6 @@
-// سمعلي: one empty screen. The student recites from memory, the app works out
-// which item they are on and follows along, and when they go quiet it pops a
-// funny meme hint. Nothing else is shown.
+// سمعلي: one empty screen with just the question. The student recites from
+// memory, the app works out which item they are on and follows along, and only
+// when they go quiet does it pop a funny meme hint.
 (function () {
   const $ = id => document.getElementById(id);
   const timing = { stall: 4000, stage: 6000 }; // silence before the first hint, then before each stronger one
@@ -8,7 +8,7 @@
   const CHEER_MS = 1400;
 
   const LINES = {
-    question: ['ها؟ ساكت ليش؟ سمّعني هذا 👇', 'يلا بطل، هذا عليك 😎', 'نسيت شنو عليك؟ هاك 😂', 'الأستاذ يسألك 👀'],
+    start: ['ها؟ ساكت ليش؟ هاك تلميح 👇', 'نسيت شلون تبدي؟ شوف الصورة 😂', 'يلا بطل، الصورة تذكرك 😎', 'الأستاذ ينتظرك 👀'],
     stall: ['ها؟ وكفت؟ 😅', 'الجواب على طرف لسانك 👅', 'ركّز يا بطل، شوف الصورة 🧠', 'لا تخلي الأستاذ يزعل 😂',
       'يمعود تذكر، هاي الصورة تذكرك 👀', 'وين رحت؟ ارجع ويانا 🛸', 'دماغك علّق؟ هاك تلميح 🔌'],
     words: ['هاك أول كلمتين، لا تكول ما ساعدتك 🙈', 'خوش، أساعدك شوية بعد 🤏', 'ها هاي بداية الجملة 👇'],
@@ -48,6 +48,7 @@
     }
     store.set('pos', items[index].id);
     hideHint();
+    if (!cheering) showQuestion();
     items[index].chunks.forEach(c => { new Image().src = c.image; });
   }
 
@@ -107,9 +108,18 @@
     return w ? w.chunk : 0;
   }
 
-  // ---------- hints ----------
-  // Stage 1: the meme card (with the question if they haven't started the item).
-  // Stage 2: also the next two words. Stage 3: the rest of the chunk to read.
+  // ---------- question and hints ----------
+  // The item's question stays on screen; the hint comes only after silence.
+  function showQuestion() {
+    const el = $('question');
+    const prompt = items[st.index].prompt;
+    if (!el.hidden && el.textContent === prompt) return;
+    el.textContent = prompt;
+    el.hidden = false;
+    replay(el);
+  }
+
+  // Stage 1: the meme card. Stage 2: also the next two words. Stage 3: the rest of the chunk to read.
   function showHint(stage) {
     const item = items[st.index];
     const ci = currentChunk();
@@ -120,9 +130,7 @@
     st.hintChunk = ci;
     st.hintAt = Date.now();
     st.hintsUsed++;
-    $('hint-line').textContent = pick(stage === 1 ? (started ? LINES.stall : LINES.question) : stage === 2 ? LINES.words : LINES.full);
-    $('hint-q').textContent = item.prompt;
-    $('hint-q').hidden = started;
+    $('hint-line').textContent = pick(stage === 1 ? (started ? LINES.stall : LINES.start) : stage === 2 ? LINES.words : LINES.full);
     if (isNew) {
       $('hint-img').src = chunk.image;
       $('hint-img').alt = 'تلميح: ' + chunk.caption;
@@ -156,13 +164,16 @@
     const el = $('cheer');
     el.textContent = pick(LINES.cheer);
     el.hidden = false;
+    $('question').hidden = true;
     cheering = true;
     replay(el);
     clearTimeout(cheer.timer);
     cheer.timer = setTimeout(() => {
       el.hidden = true;
       cheering = false;
-      if (st) st.lastProgress = Date.now();
+      if (!st) return;
+      st.lastProgress = Date.now();
+      showQuestion();
     }, CHEER_MS);
   }
 
