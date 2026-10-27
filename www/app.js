@@ -6,6 +6,9 @@
   const timing = { stall: 4000, stage: 6000 }; // silence before the first hint, then before each stronger one
   const LOCATE_AFTER = 3; // heard words that don't fit the current item before looking at the others
   const CHEER_MS = 1400;
+  const SWIPE = 50; // px a finger must travel to count as a swipe rather than a tap
+  const KNOWN = 80;  // best score at which an item counts as memorised
+  const ORDINALS = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر'];
 
   const LINES = {
     start: ['ها؟ ساكت ليش؟ هاك تلميح 👇', 'نسيت شلون تبدي؟ شوف الصورة 😂', 'يلا بطل، الصورة تذكرك 😎', 'الأستاذ ينتظرك 👀'],
@@ -16,6 +19,7 @@
     cheer: ['عاش! 🔥', 'وحش 💪', 'صح لسانك 👏', 'ولك انت عبقري 🤯', 'الأستاذ فخور بيك 🥹', 'نار 🔥🔥', 'حفظ ميه بالميه 💯'],
   };
   const pick = list => list[Math.floor(Math.random() * list.length)];
+  const digits = n => String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
 
   const store = {
     get(key, fallback) {
@@ -25,11 +29,13 @@
     set(key, value) { try { localStorage.setItem('samaali:' + key, JSON.stringify(value)); } catch (_) {} },
   };
 
-  let items = [];   // every item of every chapter, in booklet order
-  let entries = []; // the matcher's view of each item
+  let items = [];    // every item of every chapter, in booklet order
+  let chapters = []; // { title, start, count } for each chapter
+  let entries = [];  // the matcher's view of each item
   let st = null;    // where the student is in the current item
   let listening = false;
   let cheering = false;
+  let picking = false; // the chapter sheet is open
   let speech = null;
 
   // ---------- following the student ----------
@@ -37,7 +43,7 @@
   // lines up in the item and `pointer` how far it got; segment bookkeeping
   // carries over so a jump mid-sentence keeps lining up.
   function begin(index, start = 0, pointer = start) {
-    const carry = st ? { segment: st.segment, tokOffset: st.tokOffset } : { segment: -1, tokOffset: 0 };
+    const carry = st ? { segment: st.segment, tokOffset: st.tokOffset, heard: st.heard } : { segment: -1, tokOffset: 0, heard: 0 };
     st = Object.assign({
       index, words: entries[index].words, segStart: start, pointer: Math.max(start, pointer), states: {},
       hint: 0, hintChunk: -1, hintAt: 0, hintsUsed: 0, lastProgress: Date.now(),
@@ -48,14 +54,16 @@
     }
     store.set('pos', items[index].id);
     hideHint();
+    showWhere();
     if (!cheering) showQuestion();
     items[index].chunks.forEach(c => { new Image().src = c.image; });
   }
 
   function onHeard(text, segment) {
-    if (!st || !listening) return;
+    if (!st || !listening || picking) return;
     if (segment !== st.segment) { st.segment = segment; st.segStart = st.pointer; st.tokOffset = 0; }
     const toks = Match.tokenize(text);
+    st.heard = toks.length;
     const fresh = toks.slice(st.tokOffset).join(' ');
     if (!fresh) return;
     const r = follow(fresh);
@@ -103,6 +111,13 @@
     begin((st.index + 1) % items.length);
   }
 
+  // Moves to another item by hand; words already heard in this segment stay with the old one.
+  function go(index, anim = 'pop') {
+    st.tokOffset = st.heard;
+    begin((index + items.length) % items.length);
+    replay($('question'), anim);
+  }
+
   function currentChunk() {
     const w = st.words[Math.min(st.pointer, st.words.length - 1)];
     return w ? w.chunk : 0;
@@ -117,6 +132,13 @@
     el.textContent = prompt;
     el.hidden = false;
     replay(el);
+  }
+
+  // The small label at the top: which chapter, and how far into it.
+  function showWhere() {
+    const ch = chapters[items[st.index].chapter];
+    $('where').textContent = ch.title + ' — ' + digits(st.index - ch.start + 1) + ' من ' + digits(ch.count) + ' ▾';
+    $('where').hidden = false;
   }
 
   // Stage 1: the meme card. Stage 2: also the next two words. Stage 3: the rest of the chunk to read.
@@ -154,10 +176,10 @@
     $('hint').hidden = true;
   }
 
-  function replay(el) {
-    el.classList.remove('pop');
+  function replay(el, anim = 'pop') {
+    el.classList.remove('pop', 'next', 'prev');
     void el.offsetWidth;
-    el.classList.add('pop');
+    el.classList.add(anim);
   }
 
   function cheer() {
@@ -178,7 +200,7 @@
   }
 
   setInterval(() => {
-    if (!st || !listening || cheering) return;
+    if (!st || !listening || cheering || picking) return;
     const now = Date.now();
     if (now - st.lastProgress < timing.stall) return;
     if (!st.hint) showHint(1);
@@ -240,11 +262,69 @@
   });
 
   // Tapping starts the mic if it isn't on, otherwise asks for a stronger hint.
+  // Swiping moves between questions: right like turning a page of the ملزمة, or up like the next reel.
+  let touch = null, swiped = false;
+  $('stage').addEventListener('pointerdown', e => { touch = { x: e.clientX, y: e.clientY }; swiped = false; });
+  $('stage').addEventListener('pointercancel', () => { touch = null; });
+  $('stage').addEventListener('pointerup', e => {
+    if (!touch || !st) return;
+    const dx = e.clientX - touch.x, dy = e.clientY - touch.y;
+    touch = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE) return;
+    swiped = true;
+    const next = Math.abs(dx) > Math.abs(dy) ? dx > 0 : dy < 0;
+    go(st.index + (next ? 1 : -1), next ? 'next' : 'prev');
+    store.set('swiped', true);
+    $('tip').hidden = true;
+    if (!listening) listen(true);
+  });
   $('stage').addEventListener('click', () => {
-    if (!st) return;
+    if (!st || swiped) return;
     if (!listening) { listen(true); return; }
     showHint(Math.min(3, st.hint + 1));
   });
+
+  // ---------- chapters ----------
+  $('where').addEventListener('click', e => {
+    e.stopPropagation();
+    if (st) openChapters();
+  });
+  $('sheet').addEventListener('click', e => { if (e.target === $('sheet')) closeChapters(); });
+
+  function openChapters() {
+    const list = $('sheet-list');
+    list.textContent = '';
+    chapters.forEach((ch, k) => {
+      const ids = items.slice(ch.start, ch.start + ch.count).map(it => it.id);
+      const known = ids.filter(id => store.get('best:' + id, -1) >= KNOWN).length;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chapter' + (k === items[st.index].chapter ? ' on' : '');
+      b.innerHTML = '<span class="chapter-num"></span><span class="chapter-text"><span class="chapter-title"></span>' +
+        '<span class="chapter-meta"></span><span class="chapter-bar"><i></i></span></span>';
+      b.querySelector('.chapter-num').textContent = digits(k + 1);
+      b.querySelector('.chapter-title').textContent = ch.title;
+      b.querySelector('.chapter-meta').textContent = 'الفصل ' + (ORDINALS[k] || digits(k + 1)) + '، حافظ ' + digits(known) + ' من ' + digits(ch.count);
+      b.querySelector('.chapter-bar i').style.width = (known / ch.count * 100) + '%';
+      b.addEventListener('click', () => {
+        // Start at the first question not memorised yet.
+        const first = ids.findIndex(id => store.get('best:' + id, -1) < KNOWN);
+        closeChapters();
+        go(ch.start + Math.max(0, first));
+        if (!listening) listen(true);
+      });
+      list.appendChild(b);
+    });
+    picking = true;
+    hideHint();
+    $('sheet').hidden = false;
+  }
+
+  function closeChapters() {
+    picking = false;
+    $('sheet').hidden = true;
+    if (st) st.lastProgress = Date.now();
+  }
 
   // For testing without a microphone: Samaali.say('...') is one new speech
   // segment; pass the same segment number again to send a longer partial.
@@ -255,19 +335,23 @@
       onHeard(text, segment === undefined ? st.segment + 1 : segment);
     },
     state() {
-      return st && { id: items[st.index].id, pointer: st.pointer, length: st.words.length, hint: st.hint, listening };
+      return st && { id: items[st.index].id, index: st.index, pointer: st.pointer, length: st.words.length, hint: st.hint, listening };
     },
     timing,
   };
 
   fetch('data/index.json')
     .then(r => r.json())
-    .then(index => Promise.all(index.chapters.map(c => fetch(c.file).then(r => r.json()))))
-    .then(chapters => {
-      chapters.forEach(ch => items.push(...ch.items));
+    .then(index => Promise.all(index.chapters.map(c => fetch(c.file).then(r => r.json())))
+      .then(data => data.forEach((ch, k) => {
+        chapters.push({ title: index.chapters[k].title, start: items.length, count: ch.items.length });
+        ch.items.forEach(it => { it.chapter = k; items.push(it); });
+      })))
+    .then(() => {
       entries = items.map(it => ({ words: Match.buildWords(it), prompt: Match.promptWords(it.prompt) }));
       const saved = items.findIndex(it => it.id === store.get('pos', null));
       begin(saved < 0 ? 0 : saved);
+      $('tip').hidden = store.get('swiped', false);
       listen();
     })
     .catch(() => setNotice('ما كدرت أحمّل الأسئلة 😕'));

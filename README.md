@@ -1,6 +1,6 @@
 # سمعلي
 
-تطبيق أندرويد لتسميع حفظيات السادس العلمي بالصوت. تفتحه تطلعلك شاشة فاضية: تحجي من حفظك والتطبيق يسمعك ويعرف لحاله شنو دتسمّع (من الجواب أو من السؤال إذا كلته)، ويتابعك كلمة كلمة. إذا وكفت وسكتت، يطلعلك **تلميح ميم** مع جملة تضحك؛ إذا بقيت واكف تطلع أول كلمتين، وبعدها المقطع كله حتى تقراه. من تخلص جواب يفرحلك ويروح للي بعده.
+تطبيق لتسميع حفظيات السادس العلمي بالصوت. تفتحه تطلعلك شاشة فاضية بيها السؤال بس: تحجي من حفظك والتطبيق يسمعك ويعرف لحاله شنو دتسمّع (من الجواب أو من السؤال إذا كلته)، ويتابعك كلمة كلمة. إذا وكفت وسكتت، يطلعلك **تلميح ميم** مع جملة تضحك؛ إذا بقيت واكف تطلع أول كلمتين، وبعدها المقطع كله حتى تقراه. من تخلص جواب يفرحلك ويروح للي بعده. تسحب يمين أو فوك للسؤال الجاي ويسار للي قبله، ومن اسم الفصل الصغير فوك تختار الفصل؛ يبديك من أول سؤال بعدك ما حافظه.
 
 النسخة الحالية: فيزياء، كل فصول الملزمة التسعة (المتسعات، الحث الكهرومغناطيسي، التيار المتناوب، الموجات الكهرومغناطيسية، البصريات الفيزيائية، الفيزياء الحديثة، إلكترونيات الحالة الصلبة، الأطياف الذرية والليزر، الفيزياء النووية)، 590 سؤال من ملزمة كلاميات حسين محمد.
 
@@ -12,7 +12,7 @@
 
 ## How it works
 
-- `www/` is the whole app: plain HTML/CSS/JS, no bundler. It is one empty screen; hints, cheers and mic notices are the only things that appear on it.
+- `www/` is the whole app: plain HTML/CSS/JS, no bundler. It is one empty screen with the current question and a small chapter label; hints, cheers and mic notices appear only when needed. Swipes move between questions, and the label opens a chapter sheet with how many questions of each are memorised (best score 80 or more).
 - `www/match.js` normalizes Arabic (hamza, ta marbuta, diacritics) and walks the heard words against the expected answer with a small lookahead, so ASR mistakes and skipped words don't derail it. Tokens with no Arabic letters (Q, ΔV, E/K) are optional. `locate()` finds which item the student is reciting when their words stop fitting the current one: it tries every place in every answer, and the prompt if they opened with a question word.
 - `www/speech.js` uses the Android speech recognizer, or the Web Speech API in a browser (Chrome, or Safari on the iPhone, which needs a tap before it listens and falls back from `ar-IQ` to `ar-SA`). Recognizers stop after a pause, so it restarts itself; each restart is a new segment that is aligned from where the last one ended.
 - `native/` is a small WebView shell (one Java file) that serves `www/` from a fake https origin and exposes the Android recognizer as `window.SamaaliNative`; `www/native-shim.js` wraps it in the Capacitor plugin API that `speech.js` already uses. `tools/build-apk.sh` builds it with `aapt`, `dx` and `apksigner` from Ubuntu packages, no Gradle. The Capacitor project in `android/` still works the same way if you build with Gradle instead.

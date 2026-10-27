@@ -41,6 +41,8 @@ function fakeRecognizer() {
   assert.strictEqual(await page.textContent('#question'), 'عرّف المتسعة');
   assert.ok(await visible('#question'));
   assert.ok(!(await visible('#hint')) && !(await visible('#notice')), 'no hint before the silence');
+  assert.strictEqual(await page.textContent('#where'), 'المتسعات — ١ من ٢٧ ▾');
+  assert.ok(await visible('#tip'), 'swipe tip until the first swipe');
   await shot('question');
 
   // Quiet before starting: the first meme card under the question.
@@ -105,6 +107,43 @@ function fakeRecognizer() {
   await page.reload();
   await page.waitForFunction(() => window.Samaali && Samaali.state());
   assert.strictEqual((await state()).id, before);
+
+  // Swiping: right or up for the next question, left for the previous one; a swipe is not a tap.
+  const swipe = async (dx, dy) => {
+    await page.mouse.move(200, 430);
+    await page.mouse.down();
+    await page.mouse.move(200 + dx, 430 + dy, { steps: 5 });
+    await page.mouse.up();
+  };
+  const at = (await state()).index;
+  await swipe(120, 0);
+  assert.strictEqual((await state()).index, at + 1);
+  await swipe(0, -120);
+  assert.strictEqual((await state()).index, at + 2);
+  await swipe(-120, 0);
+  s = await state();
+  assert.strictEqual(s.index, at + 1);
+  assert.strictEqual(s.hint, 0, 'a swipe does not ask for a hint');
+  assert.ok(!(await visible('#tip')), 'tip gone after the first swipe');
+
+  // The chapter label opens the chapters; picking one starts at its first question not memorised yet.
+  await page.click('#where');
+  assert.ok(await visible('#sheet'));
+  assert.strictEqual(await page.locator('.chapter').count(), 9);
+  assert.ok((await page.textContent('.chapter.on')).includes('الفصل التاسع'));
+  assert.ok((await page.textContent('.chapter >> nth=0')).includes('حافظ ١ من ٢٧'), 'the capacitor definition counts as memorised');
+  if (shots) await page.waitForTimeout(400); // let the sheet finish rising
+  await shot('chapters');
+  await page.click('.chapter >> nth=0');
+  assert.ok(!(await visible('#sheet')));
+  s = await state();
+  assert.strictEqual(s.id, 'c1-def-capacitance', 'skips the memorised first question');
+  assert.strictEqual(s.hint, 0);
+  assert.strictEqual(await page.textContent('#where'), 'المتسعات — ٢ من ٢٧ ▾');
+  await page.click('#where');
+  await page.click('.chapter >> nth=2');
+  assert.ok((await state()).id.startsWith('c3-'));
+  assert.ok((await page.textContent('#where')).startsWith('التيار المتناوب — ١ من'));
 
   // Safari on the iPhone: no start without a tap, and no Iraqi Arabic.
   await page.close();
